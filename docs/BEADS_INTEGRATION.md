@@ -1,6 +1,6 @@
 # Conductor + Beads Integration
 
-> **Status**: Implemented  
+> **Status**: In Progress  
 > **Version**: 0.1.0  
 > **Date**: 2024-12-26
 
@@ -289,9 +289,23 @@ Resolution: Add to plan.md under "Unplanned Tasks" section
   "epicPrefix": "conductor",
   "autoCreateTasks": true,
   "autoSyncOnComplete": true,
-  "compactOnArchive": true
+  "compactOnArchive": true,
+  "_comment": "Optional documentation field"
 }
 ```
+
+| Field | Description |
+|-------|-------------|
+| `enabled` | Enable/disable Beads integration |
+| `mode` | `"stealth"` keeps `.beads/` local-only; `"normal"` commits to repo |
+| `sync` | Sync direction: bidirectional, conductor-to-beads, or manual |
+| `epicPrefix` | Prefix for auto-created Beads epics |
+| `autoCreateTasks` | Auto-create Beads tasks from plan.md phases |
+| `autoSyncOnComplete` | Sync to Beads on task completion |
+| `compactOnArchive` | Run `bd compact` when archiving tracks |
+| `_comment` | Optional field for documentation purposes (ignored by parser) |
+
+> **Note**: `stealthMode` is deprecated. Use `"mode": "stealth"` instead.
 
 ### Detection Logic
 
@@ -299,6 +313,13 @@ Skill activation checks:
 1. Does `conductor/` exist? → Load Conductor
 2. Does `.beads/` exist? → Also load Beads integration
 3. Both present? → Use combined workflow
+
+**Detection Rule**: Only use `bd` commands if ALL conditions are met:
+1. `which bd` returns a valid path (bd CLI installed)
+2. `conductor/beads.json` exists
+3. `"enabled": true` in beads.json
+
+Note: `.beads/` directory may exist even when `enabled` is `false` (user temporarily disabled integration).
 
 ## Implementation Phases
 
@@ -321,6 +342,8 @@ Skill activation checks:
 ## Parallel Execution Integration
 
 Beads provides robust coordination for Conductor's parallel task execution feature.
+
+For detailed parallel execution design, see [PARALLEL_EXECUTION.md](PARALLEL_EXECUTION.md).
 
 ### Why Beads is Ideal for Parallel Execution
 

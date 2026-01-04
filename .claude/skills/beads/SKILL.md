@@ -6,10 +6,6 @@ description: >
   complex dependencies, or needs persistent context across compaction cycles. Trigger with phrases like
   "create task for", "what's ready to work on", "show task", "track this work", "what's blocking", or
   "update status".
-allowed-tools: "Read,Bash(bd:*)"
-version: "0.34.0"
-author: "Steve Yegge <https://github.com/steveyegge>"
-license: "MIT"
 ---
 
 # Beads - Persistent Task Memory for AI Agents
@@ -52,6 +48,11 @@ Graph-based issue tracker that survives conversation compaction. Provides persis
 **Verify Installation**:
 ```bash
 bd --version  # Should return 0.34.0 or later
+```
+
+**Graph Analysis** (optional but recommended):
+```bash
+bv --version  # Graph validation tool for dependency analysis
 ```
 
 **First-Time Setup** (humans run once):
@@ -125,13 +126,38 @@ bd ready  # Check newly unblocked work
 
 When used with Conductor, Beads provides persistent task memory:
 
-- Each Conductor track becomes a Beads epic
+- Each Conductor track becomes a Beads epic (via `beads_epic` in metadata.json)
 - Tasks in plan.md sync to Beads subtasks
 - `bd ready` helps select next task
 - Notes survive context compaction
 - Phase dependencies map to Beads graph
 
-See `conductor/beads.json` for integration config.
+**Detection Rule**: Only use `bd` commands automatically when:
+1. `which bd` returns a valid path
+2. `conductor/beads.json` exists with `"enabled": true`
+
+See [conductor skill](../conductor/SKILL.md) for full detection details and integration config.
+
+## Relation to Other Beads Skills
+
+This skill is the **foundation** for all beads workflows. Use it for day-to-day multi-session task tracking.
+
+For full feature planning pipelines, use these specialized skills in order:
+1. **planning** - Discovery, risk assessment, spike execution
+2. **filing-beads** - Convert plans into epics/issues with dependencies
+3. **reviewing-beads** - Quality gate for clarity and completeness
+4. **orchestrating-beads** - Multi-agent parallel execution
+
+These workflow skills build on `beads` and use `bd` commands internally.
+
+## Glossary
+
+| Term | Definition |
+|------|------------|
+| **Bead** | Generic unit of work in the BD graph |
+| **Epic** | Bead with `type=epic` representing a workstream/feature |
+| **Issue/Task** | Bead with `type=task\|bug\|feature\|chore` - executable work items |
+| **Dependency** | Relationship where one bead blocks another |
 
 ## Resources
 

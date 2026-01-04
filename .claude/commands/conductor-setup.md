@@ -2,6 +2,8 @@
 description: Initialize project with Conductor context-driven development
 ---
 
+<!-- Note: This is the Claude Code version. Gemini CLI uses colon-form commands like `/conductor:setup` -->
+
 <!-- 
 SYSTEM DIRECTIVE: You are an AI agent. Follow these instructions precisely.
 CRITICAL: Validate every tool call. If any fails, halt and announce the failure.
@@ -28,6 +30,7 @@ Initialize this project with context-driven development. Follow this workflow pr
    - If `STEP` is `"2.3_tech_stack"`: Announce "Resuming: Tech Stack complete. Next: Code Styleguides." → Proceed to **Section 2.4**
    - If `STEP` is `"2.4_code_styleguides"`: Announce "Resuming: Styleguides complete. Next: Workflow." → Proceed to **Section 2.5**
    - If `STEP` is `"2.5_workflow"`: Announce "Resuming: Scaffolding complete. Next: Initial Track." → Proceed to **Phase 2 (Section 3.0)**
+   - If `STEP` is `"2.7_beads_integration"`: Announce "Resuming: Beads integration complete. Next: Initial Track." → Proceed to **Phase 2 (Section 3.0)**
    - If `STEP` is `"3.3_initial_track_generated"` or `"complete"`:
      - Announce: "Project already initialized. Use `/conductor-newtrack` or `/conductor-implement`."
      - **HALT** the setup process.
@@ -70,18 +73,35 @@ Present to user:
    - Announce: "Existing project detected."
    - If uncommitted changes detected: "WARNING: You have uncommitted changes. Please commit or stash before proceeding."
    - **Request Permission:**
-     > "I've detected an existing project. May I perform a read-only scan to analyze it?"
-     > A) Yes
-     > B) No
+     > "I've detected an existing project. May I perform a deep analysis to understand it?"
+     > A) Yes - Full analysis (recommended)
+     > B) Quick scan only
+     > C) No - I'll provide context manually
      >
-     > Please respond with A or B.
-   - If denied, halt and await instructions.
-   - **Code Analysis:**
+     > Please respond with A, B, or C.
+   - If C, halt and await instructions.
+   - **Deep Code Analysis (Option A):**
      - Respect `.gitignore` and `.geminiignore` patterns
-     - Analyze README.md, package.json, directory structure
+     - **Use gkg repo_map** to understand project structure:
+       ```
+       mcp__gkg__repo_map with relative_paths: ["src", "app", "lib"] 
+       to get architecture overview
+       ```
+     - **Use gkg search_codebase_definitions** to find key patterns:
+       - Main entry points, routers, controllers
+       - Database models/schemas
+       - Authentication/authorization patterns
+     - **Use Oracle** to synthesize analysis:
+       > "Analyze this codebase structure and identify:
+       > 1. Architecture pattern (MVC, Clean, Hexagonal, etc.)
+       > 2. Key abstractions and conventions
+       > 3. Tech stack with versions
+       > 4. Potential areas of complexity"
+     - Present Oracle's analysis to user for confirmation
+   - **Quick Scan (Option B):**
+     - Analyze README.md, package.json, directory structure only
      - Extract: Programming Language, Frameworks, Database Drivers
      - Infer: Architecture type (Monorepo, Microservices, MVC)
-     - Summarize project goal from README header or package description
    - Proceed to **Section 2.1**
 
    **IF GREENFIELD:**
@@ -93,6 +113,21 @@ Present to user:
      - Execute: `mkdir -p conductor`
      - Create `conductor/setup_state.json`: `{"last_successful_step": ""}`
      - Write response to `conductor/product.md` under `# Initial Concept`
+   - **Deep Research Phase:**
+     - **Use exa-code** to research best practices:
+       > Query: "<user's project idea> best practices architecture"
+       > Example: "real-time chat app best practices architecture"
+     - **Use exa-code** for tech stack recommendations:
+       > Query: "<project type> recommended tech stack 2024"
+     - **Use Oracle** to synthesize research:
+       > "Based on the user's idea '<user input>' and the research findings,
+       > recommend:
+       > 1. Optimal tech stack with rationale
+       > 2. Architecture pattern that fits
+       > 3. Key libraries/frameworks to consider
+       > 4. Potential challenges to plan for"
+     - Present Oracle's recommendations to user
+     - Store recommendations for use in subsequent Q&A sections
    - Proceed to **Section 2.1**
 
 ---
@@ -101,20 +136,26 @@ Present to user:
 
 1. **Announce:** "Now let's create `product.md`."
 
-2. **Ask Questions Sequentially (max 5):**
+2. **Leverage Deep Research:**
+   - **For Greenfield:** Use Oracle's recommendations to inform question options
+   - **For Brownfield:** Use gkg analysis to pre-populate known facts
+   - Questions should validate/refine research findings, not start from scratch
+
+3. **Ask Questions Sequentially (max 5):**
    - **Question Classification:** Before each question, classify as:
      - **Additive:** For brainstorming (users, goals, features) - add "(Select all that apply)"
      - **Exclusive Choice:** For singular decisions - do NOT add multi-select
    - **Format:** Vertical list with options:
      ```
-     A) [Option A]
-     B) [Option B]
-     C) [Option C]
+     A) [Option A] ← informed by research
+     B) [Option B] ← informed by research  
+     C) [Option C] ← informed by research
      D) Type your own answer
      E) Autogenerate and review product.md
      ```
-   - For Brownfield: Ask context-aware questions based on code analysis
-   - **AUTO-GENERATE:** If user selects E, stop questions and generate based on context
+   - For Brownfield: Ask context-aware questions based on gkg/Oracle analysis
+   - For Greenfield: Options should reflect exa-code/Oracle research
+   - **AUTO-GENERATE:** If user selects E, stop questions and generate based on context + research
 
 3. **Draft Document:** Generate `product.md` using ONLY user's selected answers. Ignore unselected options.
 
@@ -166,15 +207,35 @@ Present to user:
 
 1. **Announce:** "Now let's define the technology stack."
 
-2. **Ask Questions Sequentially (max 5):**
+2. **Leverage Deep Research:**
+   - **For Greenfield:** Present Oracle's tech stack recommendations as primary options
+   - **For Brownfield:** gkg analysis already identified the stack - confirm it
+   - Include rationale from research for each recommendation
+
+3. **Ask Questions Sequentially (max 5):**
    - Topics: Programming languages, frameworks, databases, tools
-   - Same A/B/C/D/E format
+   - Same A/B/C/D/E format with research-informed options
 
    **FOR BROWNFIELD:**
-   - **CRITICAL:** Document EXISTING stack, don't propose changes
-   - State inferred stack and ask:
+   - **CRITICAL:** Document EXISTING stack from gkg analysis, don't propose changes
+   - Present gkg/Oracle findings and ask:
+     > "Based on my analysis, your tech stack is:
+     > - Language: [detected]
+     > - Framework: [detected]
+     > - Database: [detected]
+     > - Key libraries: [detected]
+     >
      > A) Yes, this is correct
-     > B) No, I need to provide the correct tech stack
+     > B) No, I need to provide corrections"
+   
+   **FOR GREENFIELD:**
+   - Present Oracle's recommendations with rationale:
+     > "Based on research for your project type, I recommend:
+     > A) [Recommended stack] - [rationale from Oracle]
+     > B) [Alternative stack] - [rationale]
+     > C) [Minimal stack] - for quick prototyping
+     > D) Type your own tech stack
+     > E) Autogenerate based on recommendations"
 
 3. **Draft Document:** Generate using ONLY user's selected answers.
 

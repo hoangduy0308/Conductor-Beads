@@ -25,48 +25,54 @@ Conductor enables context-driven development by:
 2. Organizing work into "tracks" (features, bugs, improvements)
 3. Creating specs and phased implementation plans
 4. Executing with TDD practices and progress tracking
-5. **Parallel execution** of independent tasks using sub-agents
+5. **Multi-agent parallel execution** via orchestrating-beads skill
 
-## Parallel Execution (New Feature)
+## Integrated Workflow
 
-Conductor now supports parallel task execution for eligible phases:
+Conductor now integrates with the planning skill pipeline for complex features:
 
-### How It Works
-- During `/conductor-newtrack`, tasks are analyzed for parallelization potential
-- Tasks with no file conflicts and no dependencies can run in parallel
-- Parallel phases use `<!-- execution: parallel -->` annotation
-- Each task has `<!-- files: ... -->` for exclusive file ownership
-- Dependencies use `<!-- depends: ... -->` annotation
-
-### Plan.md Format for Parallel Phases
-```markdown
-## Phase 1: Core Setup
-<!-- execution: parallel -->
-
-- [ ] Task 1: Create auth module
-  <!-- files: src/auth/index.ts, src/auth/index.test.ts -->
-  
-- [ ] Task 2: Create config module
-  <!-- files: src/config/index.ts -->
-  
-- [ ] Task 3: Create utilities
-  <!-- files: src/utils/index.ts -->
-  <!-- depends: task1 -->
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    /conductor-setup                          │
+│                    (one-time setup)                          │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ DEEP RESEARCH PHASE (NEW)                           │   │
+│   │ • Greenfield: exa-code + Oracle → tech recommendations │
+│   │ • Brownfield: gkg repo_map + Oracle → code analysis   │
+│   └─────────────────────────────────────────────────────┘   │
+│   Output: product.md, tech-stack.md, workflow.md, tracks.md  │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                     PROJECT ĐÃ SẴN SÀNG
+                              │
+    ══════════════════════════════════════════════════════════
+    ║         MỖI KHI CẦN THÊM FEATURE/BUG MỚI               ║
+    ║                  (User tự chọn)                         ║
+    ══════════════════════════════════════════════════════════
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+              ▼                               ▼
+    /conductor-newtrack               planning skill
+    (classic mode)                    (full pipeline)
+    ───────────────                   ───────────────
+    • Interactive Q&A                 • Discovery (parallel agents)
+    • spec.md + plan.md               • Risk assessment (Oracle)
+    • Beads minimal                   • Spikes for HIGH risk
+    • Single/few files                • filing-beads → beads graph
+                                      • reviewing-beads → quality gate
+                                      • orchestrating-beads → execution
 ```
 
-### Execution Flow
-1. **Coordinator** parses parallel annotations
-2. Detects file conflicts (fails safe if found)
-3. Spawns sub-agents via `Task()` for independent tasks
-4. Monitors `parallel_state.json` for completion
-5. Aggregates results and updates plan.md
+### When to use which?
 
-### When to Use Parallel Execution
-- ✅ Tasks modifying different files
-- ✅ Independent components (auth, config, utils)
-- ✅ Multiple test file creation
-- ❌ Tasks with shared state
-- ❌ Tasks with sequential dependencies
+| Use Case | Entry Point |
+|----------|-------------|
+| Bug fix (1-5 files, known location) | `/conductor-newtrack` |
+| Small chore/refactor | `/conductor-newtrack` |
+| Large feature (multi-module) | `planning` skill |
+| External integration (APIs, payments) | `planning` skill |
+| Unknown scope (needs discovery) | `planning` skill |
 
 ## Context Loading
 
@@ -84,7 +90,7 @@ For active tracks, also load:
 
 ## Beads Integration
 
-Beads integration is **always attempted** for persistent task memory. If `bd` CLI is unavailable or fails, the user can choose to continue without it.
+Conductor **always checks for Beads** and offers integration when available. If `bd` CLI is unavailable or disabled, the user can continue without it.
 
 ### Detection (MUST check before using bd commands)
 
@@ -102,6 +108,11 @@ if which bd > /dev/null 2>&1 && [ -f conductor/beads.json ]; then
 fi
 ```
 
+**Detection Rule**: Only use `bd` commands if ALL conditions are met:
+1. `which bd` returns a valid path
+2. `conductor/beads.json` exists
+3. `"enabled": true` in beads.json
+
 ### If Beads is NOT available:
 - **DO NOT** run any `bd` commands
 - Use only plan.md markers for task tracking
@@ -113,6 +124,27 @@ fi
 - Use `bd ready` instead of manual task selection
 - Notes survive context compaction
 
+## Bead-Backed Tracks
+
+When a track has `beads_epic` in its `metadata.json`:
+
+1. **Task-level tracking** is in Beads (not plan.md checkboxes)
+2. **Parallel execution** uses `orchestrating-beads` skill (not Conductor's parallel annotations)
+3. **Status** is derived from Beads (`bd list`, `bv --robot-triage`)
+
+### Implementation Detection
+
+```javascript
+// In /conductor-implement
+const metadata = JSON.parse(fs.readFileSync('conductor/tracks/<id>/metadata.json'));
+if (metadata.beads_epic) {
+  // Delegate to orchestrating-beads skill
+  skill("orchestrating-beads");
+} else {
+  // Use classic Conductor implementation
+}
+```
+
 ## Proactive Behaviors
 
 1. **On new session**: Check for in-progress tracks, offer to resume
@@ -121,13 +153,15 @@ fi
 4. **On all tasks complete**: Congratulate and offer archive/cleanup
 5. **On stale context detected**: If setup >2 days old or significant codebase changes detected, suggest `/conductor-refresh`
 6. **On Beads available**: If `bd` CLI detected during setup, offer integration
+7. **On complex feature**: Suggest `planning` skill instead of classic newtrack
 
 ## Intent Mapping
 
-| User Intent | Command |
-|-------------|---------|
+| User Intent | Command/Skill |
+|-------------|---------------|
 | "Set up this project" | `/conductor-setup` |
-| "Create a new feature" | `/conductor-newtrack [desc]` |
+| "Create a new feature" (simple) | `/conductor-newtrack [desc]` |
+| "Plan a big feature" | `planning` skill |
 | "Start working" / "Implement" | `/conductor-implement [id]` |
 | "What's the status?" | `/conductor-status` |
 | "Undo that" / "Revert" | `/conductor-revert` |
@@ -135,10 +169,21 @@ fi
 | "This is blocked" | `/conductor-block` |
 | "Skip this task" | `/conductor-skip` |
 | "This needs revision" / "Spec is wrong" | `/conductor-revise` |
-| "Save context" / "Handoff" / "Transfer to next section" | `/conductor-handoff` |
+| "Save context" / "Handoff" | `/conductor-handoff` |
 | "Archive completed" | `/conductor-archive` |
 | "Export summary" | `/conductor-export` |
 | "Docs are outdated" / "Sync with codebase" | `/conductor-refresh` |
+
+## Related Skills
+
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| **beads** | Foundation skill for bd CLI and task graph | All bead-backed work |
+| **planning** | Discovery, risk assessment, spike workflow | Complex features |
+| **filing-beads** | Create structured beads with dependencies | After planning |
+| **reviewing-beads** | Quality gate for beads | Before execution |
+| **orchestrating-beads** | Multi-agent parallel execution | Bead-backed tracks |
+| **skill-creator** | Guide for creating new skills | Extending Conductor ecosystem |
 
 ## References
 

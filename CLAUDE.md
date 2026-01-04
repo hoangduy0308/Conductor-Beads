@@ -14,6 +14,7 @@ It works with both Gemini CLI (via extension) and Claude Code (via commands and 
 ## Architecture
 
 ### Repository Structure
+
 ```
 Conductor-Beads/
 ├── .claude/
@@ -21,6 +22,10 @@ Conductor-Beads/
 │   └── skills/             # Claude Code skills
 │       ├── conductor/      # Context-driven development skill
 │       ├── beads/          # Persistent task memory skill
+│       ├── planning/       # Discovery and risk assessment
+│       ├── filing-beads/   # Structured bead creation
+│       ├── reviewing-beads/# Quality gate for beads
+│       ├── orchestrating-beads/ # Multi-agent execution
 │       └── skill-creator/  # Skill creation guide
 ├── commands/conductor/     # Gemini CLI TOML commands (13 commands)
 ├── templates/              # Workflow and styleguide templates
@@ -54,7 +59,26 @@ Conductor-Beads/
 |-------|----------|---------|
 | **conductor** | `.claude/skills/conductor/` | Auto-activates when `conductor/` exists. Provides intent mapping and proactive behaviors. |
 | **beads** | `.claude/skills/beads/` | Auto-activates when `.beads/` exists. Provides persistent memory across sessions. |
+| **planning** | `.claude/skills/planning/` | Discovery, risk assessment, and spike workflow for complex features. |
+| **filing-beads** | `.claude/skills/filing-beads/` | Structured bead creation with dependencies and priorities. |
+| **reviewing-beads** | `.claude/skills/reviewing-beads/` | Quality gate for beads before implementation. |
+| **orchestrating-beads** | `.claude/skills/orchestrating-beads/` | Multi-agent parallel execution with Agent Mail. |
 | **skill-creator** | `.claude/skills/skill-creator/` | Guide for creating new AI agent skills. |
+
+### Planning Pipeline (for complex features)
+
+For large, multi-module features, use the planning skill pipeline instead of classic `/conductor-newtrack`:
+
+```
+planning skill → filing-beads → reviewing-beads → /conductor-newtrack --import → orchestrating-beads
+```
+
+This provides:
+- **Discovery**: Parallel agents explore codebase with gkg, librarian, exa
+- **Risk Assessment**: Oracle analyzes gaps, identifies HIGH/MEDIUM/LOW risks
+- **Spikes**: Validate HIGH risk items before committing to implementation
+- **Quality Gate**: reviewing-beads ensures beads are clear and complete
+- **Multi-Agent Execution**: orchestrating-beads spawns parallel workers with Agent Mail
 
 ### Generated Artifacts (in user projects)
 

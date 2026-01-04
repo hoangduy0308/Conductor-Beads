@@ -80,7 +80,38 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 1.  **Announce Action:** Announce which track you are beginning to implement.
 
-2.  **Update Status to 'In Progress':**
+2.  **Check for Bead-Backed Track (Orchestrating-Beads Delegation):**
+    -   Read the track's metadata: `conductor/tracks/<track_id>/metadata.json`
+    -   Check if `beads_epic_id` field exists and is not empty
+    -   **If `beads_epic_id` exists:**
+        -   This is a bead-backed track created via the planning skill pipeline
+        -   Check if `history/<feature>/execution-plan.md` exists (linked in metadata)
+        -   Announce:
+            > "🔄 **Bead-Backed Track Detected**
+            > 
+            > This track was created via the planning skill pipeline and has a beads epic: `<beads_epic_id>`
+            > 
+            > For bead-backed tracks, multi-agent orchestration is recommended:
+            > A) **Orchestrating Mode** - Use orchestrating-beads skill for multi-agent parallel execution with Agent Mail
+            > B) **Classic Mode** - Continue with standard Conductor implementation (single agent)
+            > 
+            > Please respond with A or B."
+        -   **If user chooses A (Orchestrating Mode):**
+            -   Announce: "Delegating to orchestrating-beads skill for multi-agent execution..."
+            -   The orchestrating-beads skill will:
+                - Initialize Agent Mail (register_agent, ensure_project)
+                - Spawn worker sub-agents per track from execution-plan.md
+                - Use file_reservation_paths for conflict prevention
+                - Monitor progress via fetch_inbox and search_messages
+                - Handle cross-track blockers
+            -   **HALT this command** - orchestrating-beads takes over
+        -   **If user chooses B (Classic Mode):**
+            -   Announce: "Continuing with classic Conductor implementation..."
+            -   Proceed to step 2a below
+    -   **If `beads_epic_id` does NOT exist:**
+        -   This is a classic track - proceed with normal implementation
+
+2a. **Update Status to 'In Progress':**
     -   Before beginning any work, you MUST update the status of the selected track in the `conductor/tracks.md` file.
     -   This requires finding the specific heading for the track (e.g., `## [ ] Track: <Description>`) and replacing it with the updated status (e.g., `## [~] Track: <Description>`).
 

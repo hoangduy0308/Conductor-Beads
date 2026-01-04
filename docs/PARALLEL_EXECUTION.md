@@ -1,8 +1,21 @@
 # Parallel Task Execution Design
 
+> **Canonical Source**: This document is the canonical reference for parallel execution details. For high-level Conductor-Beads integration overview, see [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md).
+
+**Related documentation**:
+- [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md) - Overall Conductor-Beads integration
+- [../templates/workflow.md](../templates/workflow.md) - TDD workflow methodology
+
 ## Overview
 
 This document describes the architecture for parallel task/phase execution in Conductor-Beads, inspired by [swarm-tools](https://github.com/joelhooks/swarm-tools).
+
+### Beads Availability
+
+When Beads is unavailable (`bd` not installed or `beads.json.enabled` is `false`):
+- Parallel annotations are ignored
+- Execution falls back to sequential mode
+- All coordination happens through plan.md markers only
 
 ## Current State (Sequential)
 

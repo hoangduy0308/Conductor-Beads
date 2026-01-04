@@ -41,3 +41,7 @@ This document summarizes key rules and best practices from the Google TypeScript
 - **Add Information:** Comments must add information, not just restate the code.
 
 *Source: [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)*
+
+---
+
+*See also: [General Style Guide](general.md) and `conductor/workflow.md` for project conventions.*

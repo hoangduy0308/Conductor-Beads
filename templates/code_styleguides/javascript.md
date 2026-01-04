@@ -49,3 +49,7 @@ This document summarizes key rules and best practices from the Google JavaScript
 - Type annotations are enclosed in braces (e.g., `/** @param {string} userName */`).
 
 *Source: [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html)*
+
+---
+
+*See also: [General Style Guide](general.md) and `conductor/workflow.md` for project conventions.*

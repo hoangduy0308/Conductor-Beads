@@ -46,3 +46,7 @@ This document summarizes key rules and best practices from the official "Effecti
 - **`panic`:** Reserved for truly exceptional, unrecoverable situations. Generally, libraries should not panic.
 
 *Source: [Effective Go](https://go.dev/doc/effective_go)*
+
+---
+
+*See also: [General Style Guide](general.md) and `conductor/workflow.md` for project conventions.*

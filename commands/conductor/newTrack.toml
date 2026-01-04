@@ -23,6 +23,90 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 ## 2.0 NEW TRACK INITIALIZATION
 **PROTOCOL: Follow this sequence precisely.**
 
+### 2.0a Check for Import Mode (Planning Pipeline Integration)
+
+1.  **Check for `--import` flag:** If `{{args}}` contains `--import` followed by a path:
+    -   Extract the execution plan path (e.g., `history/<feature>/execution-plan.md`)
+    -   This indicates the track was planned using the planning skill pipeline
+    -   **Go to Section 2.0b (Import Mode)** instead of classic mode
+
+2.  **If no `--import` flag:** Continue with classic mode below (Section 2.1)
+
+### 2.0b Import Mode (From Planning Pipeline)
+
+**PROTOCOL: Create track artifacts from an existing execution plan created by the planning skill.**
+
+1.  **Read Execution Plan:** Read the file at the provided path (e.g., `history/<feature>/execution-plan.md`)
+    -   Extract: Epic ID, track descriptions, bead lists, file scopes
+    -   If file doesn't exist, announce error and halt
+
+2.  **Read Approach Document:** Check for `history/<feature>/approach.md`
+    -   Extract: Gap analysis, recommended approach, risk map
+    -   Use for generating high-level spec
+
+3.  **Generate Track ID:** Create unique Track ID: `shortname_YYYYMMDD`
+
+4.  **Create Track Directory:** `conductor/tracks/<track_id>/`
+
+5.  **Create `metadata.json` with Beads Mapping:**
+    ```json
+    {
+      "track_id": "<track_id>",
+      "type": "feature",
+      "status": "new",
+      "priority": "medium",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "description": "<from execution plan>",
+      "beads_epic_id": "<epic_id from execution plan>",
+      "execution_plan_path": "<path to execution-plan.md>",
+      "approach_path": "<path to approach.md>",
+      "planning_mode": true
+    }
+    ```
+
+6.  **Generate High-Level `spec.md`:**
+    -   Create a summary spec that references the approach document
+    -   Include: Overview, Goals (from approach), Acceptance Criteria
+    -   Add note: "Detailed requirements in approach.md and beads"
+
+7.  **Generate Meta-Level `plan.md`:**
+    -   Create phases that reference the beads in execution-plan.md
+    -   Format:
+    ```markdown
+    # Implementation Plan
+    
+    > This track uses the planning skill pipeline. Detailed tasks are managed in Beads.
+    > Epic: <beads_epic_id>
+    > Execution Plan: <execution_plan_path>
+    
+    ## Phase 1: Execute Beads
+    <!-- execution: orchestrating-beads -->
+    
+    - [ ] Task: Execute epic via orchestrating-beads skill
+      - Tracks and beads defined in execution-plan.md
+      - Multi-agent parallel execution with Agent Mail
+    
+    ## Phase 2: Verification & Cleanup
+    
+    - [ ] Task: Run full test suite
+    - [ ] Task: Update documentation
+    - [ ] Task: Conductor - Phase Verification
+    ```
+
+8.  **Update `conductor/tracks.md`:** Append new track section
+
+9.  **Announce Completion:**
+    > "Track `<track_id>` created from planning pipeline.
+    > - Epic: `<beads_epic_id>`
+    > - Execution Plan: `<execution_plan_path>`
+    > 
+    > Run `/conductor:implement` to start. It will detect this is a bead-backed track and offer orchestrating-beads mode."
+
+10. **Skip to end** - Do not run classic sections 2.1-2.5
+
+---
+
 ### 2.1 Get Track Description and Determine Type
 
 1.  **Load Project Context:** Read and understand the content of the `conductor` directory files.

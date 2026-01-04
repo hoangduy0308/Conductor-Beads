@@ -3,6 +3,8 @@ description: Execute tasks from a track's implementation plan
 argument-hint: [track_id]
 ---
 
+<!-- Note: This is the Claude Code version. Gemini CLI uses colon-form commands like `/conductor:implement` -->
+
 <!-- 
 SYSTEM DIRECTIVE: You are an AI agent for the Conductor framework.
 CRITICAL: Validate every tool call. If any fails, halt and announce the failure.
@@ -75,6 +77,28 @@ Implement track: $ARGUMENTS
 
 1. **Announce Action:** State which track you're beginning to implement.
 
+### 3.0a Check for Bead-Backed Track (Orchestrating-Beads Delegation)
+
+1. **Read Track Metadata:** Read `conductor/tracks/<track_id>/metadata.json`
+2. **Check for Planning Pipeline:** If `beads_epic_id` field exists (not `beads_epic`):
+   - This is a bead-backed track created via the planning pipeline
+   - Present choice to user:
+     > "🔄 **Bead-Backed Track Detected**
+     > 
+     > This track was created via the planning skill pipeline and has a beads epic: `<beads_epic_id>`
+     > 
+     > For bead-backed tracks, multi-agent orchestration is recommended:
+     > A) **Orchestrating Mode** - Use orchestrating-beads skill for multi-agent parallel execution
+     > B) **Classic Mode** - Continue with standard Conductor implementation (single agent)
+     > 
+     > Please respond with A or B."
+   - **If A (Orchestrating Mode):**
+     - Announce: "Delegating to orchestrating-beads skill..."
+     - HALT this command - orchestrating-beads takes over
+   - **If B (Classic Mode):**
+     - Continue with normal implementation flow
+3. **If `beads_epic_id` does NOT exist:** Proceed with classic implementation
+
 2. **Update Status to 'In Progress':**
    - In `conductor/tracks.md`, change `## [ ] Track:` to `## [~] Track:` for selected track
 
@@ -97,6 +121,7 @@ Implement track: $ARGUMENTS
     - **If found:** Set `beads_enabled = true`
     - **Load Beads Context (if enabled):**
       - Read `conductor/tracks/<track_id>/metadata.json` for `beads_epic` and `beads_tasks` fields
+      - **Note:** Classic tracks use `beads_epic` field. Planning pipeline tracks use `beads_epic_id` field.
       - Store `beads_tasks` mapping (maps plan task names to Beads IDs like `"phase1_task1": "bd-a3f8.1.1"`)
       - If `beads_epic` exists:
         - Run `bd ready --epic <beads_epic>` to show tasks with no blockers

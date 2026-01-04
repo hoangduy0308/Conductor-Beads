@@ -101,9 +101,19 @@ go install github.com/steveyegge/beads/cmd/bd@latest
 bd --version
 ```
 
+### Beads Detection
+
+Before using any `bd` command, verify:
+1. `which bd` returns a valid path
+2. `conductor/beads.json` exists with `"enabled": true`
+
+If Beads is unavailable, all Conductor commands work normally using only plan.md markers.
+
 ---
 
 ## Command Workflows
+
+> **Note**: Commands use hyphen format (`/conductor-setup`) for Claude Code. The colon format (`/conductor:setup`) is for Gemini CLI.
 
 ### 1. `/conductor-setup` (or `/conductor:setup`)
 
@@ -212,7 +222,7 @@ Step 6 (If Beads enabled):
 **Generated artifacts**:
 ```
 conductor/tracks/<shortname_YYYYMMDD>/
-├── metadata.json   # Track configuration + beads_epic ID
+├── metadata.json   # Track configuration + beads_epic
 ├── spec.md         # Requirements
 └── plan.md         # Implementation plan
 ```
@@ -656,7 +666,7 @@ bd show <task-id> --notes
 | `beads.json` | Beads integration config | `conductor/` |
 | `refresh_state.json` | Refresh progress | `conductor/` |
 | `implement_state.json` | Phase-aware implementation resume | `conductor/tracks/<id>/` |
-| `metadata.json` | Track configuration + Beads epic ID | `conductor/tracks/<id>/` |
+| `metadata.json` | Track configuration + beads_epic | `conductor/tracks/<id>/` |
 | `blockers.md` | Block history log | `conductor/tracks/<id>/` |
 | `skipped.md` | Skipped tasks log | `conductor/tracks/<id>/` |
 | `revisions.md` | Revision history | `conductor/tracks/<id>/` |

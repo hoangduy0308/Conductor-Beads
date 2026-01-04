@@ -1,7 +1,6 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
-license: Complete terms in LICENSE.txt
 ---
 
 # Skill Creator
@@ -151,7 +150,7 @@ For Skills with multiple domains, organize content by domain to avoid loading ir
 ```
 bigquery-skill/
 ├── SKILL.md (overview and navigation)
-└── reference/
+└── references/
     ├── finance.md (revenue, billing metrics)
     ├── sales.md (opportunities, pipeline)
     ├── product.md (API usage, features)
@@ -354,3 +353,7 @@ After testing the skill, users may request improvements. Often this happens righ
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
 4. Implement changes and test again
+
+## License
+
+See LICENSE.txt for complete terms.

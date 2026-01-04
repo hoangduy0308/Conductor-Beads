@@ -275,7 +275,41 @@ Located in `.claude/skills/`:
 |-------|-------------|
 | **conductor** | Context-driven development methodology. Auto-activates when `conductor/` directory exists. Provides intent mapping for natural language commands. |
 | **beads** | Persistent task memory that survives conversation compaction. Auto-activates when `.beads/` directory exists. Integrates with Conductor for cross-session memory. |
+| **planning** | Discovery, risk assessment, and spike workflow for complex features. Use for large, multi-module features that need careful planning. |
+| **filing-beads** | Structured bead creation with dependencies and priorities. Creates epics and tasks in Beads. |
+| **reviewing-beads** | Quality gate for beads. Reviews issues for clarity, completeness, and correct dependencies before implementation. |
+| **orchestrating-beads** | Multi-agent parallel execution with Agent Mail. Spawns worker agents for parallel track execution. |
 | **skill-creator** | Guide for creating and packaging new AI agent skills. |
+
+### Planning Pipeline (for complex features)
+
+For large, multi-module features that need discovery and risk assessment, use the planning skill pipeline:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER CHOICE                             │
+├───────────────────────────┬─────────────────────────────────────┤
+│     /conductor-newtrack   │         planning skill              │
+│     (classic mode)        │         (full pipeline)             │
+├───────────────────────────┼─────────────────────────────────────┤
+│ • Bug fix (1-5 files)     │ • Large feature (multi-module)      │
+│ • Small chore/refactor    │ • External integration (APIs)       │
+│ • Known location          │ • Unknown scope (needs discovery)   │
+│ • Low risk                │ • HIGH risk (needs spikes)          │
+└───────────────────────────┴─────────────────────────────────────┘
+```
+
+**Pipeline flow:**
+```
+planning skill → filing-beads → reviewing-beads → /conductor-newtrack --import → orchestrating-beads
+```
+
+**What the pipeline provides:**
+- **Discovery**: Parallel agents explore codebase with gkg, librarian, exa
+- **Risk Assessment**: Oracle analyzes gaps, identifies HIGH/MEDIUM/LOW risks
+- **Spikes**: Validate HIGH risk items before committing to implementation
+- **Quality Gate**: reviewing-beads ensures beads are clear and complete
+- **Multi-Agent Execution**: orchestrating-beads spawns parallel workers with Agent Mail
 
 ### How Skills Work
 
@@ -299,7 +333,7 @@ Skills provide:
 Conductor-Beads/
 ├── .claude/
 │   ├── commands/        # Claude Code slash commands (13)
-│   └── skills/          # Skills (conductor, beads, skill-creator)
+│   └── skills/          # Skills (conductor, beads, planning, filing-beads, reviewing-beads, orchestrating-beads, skill-creator)
 ├── commands/conductor/  # Gemini CLI TOML commands (13)
 ├── templates/           # Workflow and styleguide templates
 ├── docs/                # Documentation

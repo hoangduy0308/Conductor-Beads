@@ -142,8 +142,11 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         -   If B: Retry the command.
         -   If C: HALT and wait for user.
     -   Identify the active track (marked `[~]` in tracks.md)
-    -   If there's an active track, check its `metadata.json` for `beads.epic_id`
-    -   If epic_id exists, run `bd show <epic_id>` to get detailed task status
+    -   If there's an active track, check its `metadata.json` for Beads epic ID:
+        -   Check for `beads_epic` field (classic Conductor track)
+        -   Check for `beads_epic_id` field (planning pipeline track)
+        -   Use whichever field is present
+    -   If epic ID exists, run `bd show <epic_id>` to get detailed task status
 
 3.  **Present Beads Task Status:**
     ```

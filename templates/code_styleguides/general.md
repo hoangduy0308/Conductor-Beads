@@ -21,3 +21,10 @@ This document outlines general coding principles that apply across all languages
 ## Documentation
 - Document *why* something is done, not just *what*.
 - Keep documentation up-to-date with code changes.
+
+## Conductor Integration
+
+This styleguide works alongside Conductor's development workflow:
+- Follow `conductor/workflow.md` for task lifecycle (TDD, coverage >80%, commit rules)
+- Use this guide for code-level style decisions
+- When in doubt, prefer consistency with existing codebase patterns

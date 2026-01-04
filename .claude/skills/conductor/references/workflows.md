@@ -6,8 +6,10 @@ Context-Driven Development for Claude Code. Measure twice, code once.
 
 - [Usage](#usage)
 - [Commands](#commands)
+- [Integrated Skills](#integrated-skills)
 - [Workflow: Setup](#workflow-setup)
 - [Workflow: New Track](#workflow-new-track)
+- [Workflow: Planning Pipeline](#workflow-planning-pipeline)
 - [Workflow: Implement](#workflow-implement)
 - [Workflow: Status](#workflow-status)
 - [Workflow: Revert](#workflow-revert)
@@ -21,6 +23,72 @@ Context-Driven Development for Claude Code. Measure twice, code once.
 - [Workflow: Handoff](#workflow-handoff)
 - [State Files Reference](#state-files-reference)
 - [Status Markers](#status-markers)
+
+---
+
+## Integrated Skills
+
+Conductor integrates with these skills for complex features:
+
+| Skill | Purpose | Location |
+|-------|---------|----------|
+| **planning** | Discovery, risk assessment, spikes | `.claude/skills/planning/` |
+| **filing-beads** | Structured bead creation | `.claude/skills/filing-beads/` |
+| **reviewing-beads** | Quality gate | `.claude/skills/reviewing-beads/` |
+| **orchestrating-beads** | Multi-agent execution with Agent Mail | `.claude/skills/orchestrating-beads/` |
+
+### When to use skills vs classic commands
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER CHOICE                             │
+├───────────────────────────┬─────────────────────────────────────┤
+│     /conductor-newtrack   │         planning skill              │
+│     (classic mode)        │         (full pipeline)             │
+├───────────────────────────┼─────────────────────────────────────┤
+│ • Bug fix (1-5 files)     │ • Large feature (multi-module)      │
+│ • Small chore/refactor    │ • External integration (APIs)       │
+│ • Known location          │ • Unknown scope (needs discovery)   │
+│ • Low risk                │ • HIGH risk (needs spikes)          │
+└───────────────────────────┴─────────────────────────────────────┘
+```
+
+### Planning Pipeline Flow
+
+When user chooses `planning` skill for complex features:
+
+```
+planning skill
+     │
+     ├─→ Discovery (parallel agents, gkg, librarian)
+     ├─→ Synthesis (Oracle gap analysis)
+     ├─→ Risk assessment (LOW/MEDIUM/HIGH)
+     ├─→ Spikes for HIGH risk (orchestrating-beads spike mode)
+     │
+     ▼
+filing-beads skill
+     │
+     ├─→ Create epics (bd create -t epic)
+     ├─→ Create tasks with dependencies
+     │
+     ▼
+reviewing-beads skill
+     │
+     ├─→ Quality checklist
+     ├─→ bv validation
+     │
+     ▼
+/conductor-newtrack (import mode)
+     │
+     ├─→ Create track in conductor/tracks/
+     ├─→ Link to beads_epic_id
+     │
+     ▼
+/conductor-implement
+     │
+     ├─→ Detect bead-backed track
+     └─→ Delegate to orchestrating-beads (Epic Mode)
+```
 
 ---
 
@@ -230,6 +298,35 @@ Append to `conductor/tracks.md`:
 
 ---
 
+## Workflow: Planning Pipeline
+
+**Trigger:** User invokes `planning` skill for complex features
+
+This workflow is for complex, multi-module features that need discovery, risk assessment, and multi-agent execution. See the individual skill files for detailed instructions:
+
+1. **planning skill** (`.claude/skills/planning/SKILL.md`)
+   - Discovery with parallel agents
+   - Risk assessment (LOW/MEDIUM/HIGH)
+   - Spike workflow for HIGH risk items
+
+2. **filing-beads skill** (`.claude/skills/filing-beads/SKILL.md`)
+   - Create epics and tasks in Beads
+   - Map dependencies
+
+3. **reviewing-beads skill** (`.claude/skills/reviewing-beads/SKILL.md`)
+   - Quality checklist
+   - bv validation
+
+4. **Create Conductor track** (import mode)
+   - Run `/conductor-newtrack --import "history/<feature>/execution-plan.md"`
+   - Creates track linked to beads_epic_id
+
+5. **orchestrating-beads skill** (`.claude/skills/orchestrating-beads/SKILL.md`)
+   - Multi-agent execution with Agent Mail
+   - File reservation for conflict prevention
+
+---
+
 ## Workflow: Implement
 
 **Trigger:** `/conductor-implement [track_id]`
@@ -241,6 +338,30 @@ Same checks as newtrack.
 - If track_id provided, find matching track
 - Otherwise, find first incomplete track (`[ ]` or `[~]`) in `conductor/tracks.md`
 - If no tracks, suggest `/conductor-newtrack`
+
+### 2.5. Detect Bead-Backed Track
+
+**IMPORTANT**: Check if this is a bead-backed track that should use orchestrating-beads:
+
+```bash
+# Read metadata.json
+metadata=$(cat conductor/tracks/<track_id>/metadata.json)
+beads_epic_id=$(echo $metadata | jq -r '.beads_epic_id // empty')
+
+if [ -n "$beads_epic_id" ]; then
+  # This is a bead-backed track - delegate to orchestrating-beads
+  echo "Track is bead-backed (epic: $beads_epic_id). Delegating to orchestrating-beads skill."
+  skill("orchestrating-beads")
+  # orchestrating-beads will handle:
+  # - Agent Mail setup
+  # - Spawn worker agents per track
+  # - File reservation
+  # - Monitor progress
+  # EXIT here - do not continue with classic implementation
+fi
+
+# If no beads_epic_id, continue with classic implementation below
+```
 
 ### 3. Load Context
 Read into context:

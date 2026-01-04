@@ -3,6 +3,8 @@ description: Create a new feature or bug track with spec and plan
 argument-hint: [description]
 ---
 
+<!-- Note: This is the Claude Code version. Gemini CLI uses colon-form commands like `/conductor:newTrack` -->
+
 <!-- 
 SYSTEM DIRECTIVE: You are an AI agent for the Conductor framework.
 CRITICAL: Validate every tool call. If any fails, halt and announce the failure.
@@ -27,6 +29,35 @@ Create a new track for: $ARGUMENTS
    - If ANY missing: HALT immediately
    - Announce: "Conductor is not set up. Please run `/conductor-setup` first."
    - Do NOT proceed.
+
+---
+
+## 2.0b IMPORT MODE (Planning Pipeline)
+
+**PROTOCOL: Create a bead-backed track from an existing execution plan.**
+
+If user provides `--import <path>` argument (e.g., `/conductor-newtrack --import history/auth/execution-plan.md`):
+
+1. **Validate Execution Plan:** Check that the specified file exists
+2. **Parse Execution Plan:** Extract epic info, tracks, and dependencies from the file
+3. **Create Track with Planning Pipeline Metadata:**
+   - Create `metadata.json` with additional fields:
+     ```json
+     {
+       "beads_epic_id": "<epic_id_from_plan>",
+       "execution_plan_path": "<path_to_execution_plan>",
+       "planning_mode": true
+     }
+     ```
+4. **Create Meta Plan:** Instead of detailed tasks, create a `plan.md` that references the Beads graph:
+   ```markdown
+   # Implementation Plan
+   
+   This track is managed by the Beads graph. Use `bd ready` to see available tasks.
+   
+   See execution plan: [execution-plan.md](<path>)
+   ```
+5. **Announce:** "Bead-backed track created. Use `/conductor-implement` and choose Orchestrating Mode for multi-agent execution."
 
 ---
 
@@ -350,6 +381,13 @@ Create a new track for: $ARGUMENTS
    - Store ALL phase and task IDs returned from `bd create --json` commands
 
 7. **Announce:** "Track synced to Beads as epic <epic_id>."
+
+### Beads Metadata Schema
+
+- `beads_epic`: Conductor-managed epic created by classic newtrack
+- `beads_epic_id`: Pre-existing epic from planning pipeline (orchestrating-beads)
+- `beads_tasks`: Mapping of `phase{N}_task{M}` to Beads IDs
+- `planning_mode`: Boolean indicating planning pipeline track
 
 8. **Parallel Execution Notes (if parallel enabled):**
    - For each task in a parallel phase, add file ownership to Beads notes:

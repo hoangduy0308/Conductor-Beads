@@ -89,7 +89,7 @@ Present results in this format:
 - [!] auth_20241215 - tracks.md says [~], metadata says "completed"
 
 ### Recommendations
-1. Run `/conductor-setup` to regenerate missing workflow.md
+1. Run `/conductor:setup` to regenerate missing workflow.md
 2. Add orphan track to tracks.md or delete directory
 ```
 

@@ -3,6 +3,22 @@
 ## Guiding Principles
 
 1. **The Plan is the Source of Truth:** All work must be tracked in `plan.md`
+
+> **Note for Bead-Backed Tracks**: When a track has `beads_epic` in its `metadata.json`, task status lives in Beads (via `bd` commands). The plan.md still defines phases and checkpoints, but Beads is the source of truth for per-task status and cross-session notes.
+
+### Bead-Backed Tracks vs Classic Tracks
+
+| Aspect | Classic Tracks | Bead-Backed Tracks |
+|--------|----------------|-------------------|
+| Task status | plan.md checkboxes | Beads (`bd list`, `bd ready`) |
+| Task selection | Manual from plan.md | `bd ready` priority-ordered |
+| Notes | Git notes on commits | `bd update --notes` (survives compaction) |
+| Implementation | `/conductor-implement` | Delegates to `orchestrating-beads` |
+| Graph analysis | N/A | `bv --robot-triage`, `bv --robot-plan` |
+| Multi-agent | Not supported | Full parallel execution |
+
+**Detection**: A track is bead-backed when `conductor/tracks/<id>/metadata.json` contains `beads_epic`.
+
 2. **The Tech Stack is Deliberate:** Changes to the tech stack must be documented in `tech-stack.md` *before* implementation
 3. **Test-Driven Development:** Write unit tests before implementing functionality
 4. **High Code Coverage:** Aim for >80% code coverage for all modules
@@ -68,10 +84,11 @@ All tasks follow a strict lifecycle:
    - **Step 9.1: Get Commit Hash:** Obtain the hash of the *just-completed commit* (`git log -1 --format="%H"`).
    - **Step 9.2: Draft Note Content:** Create a detailed summary for the completed task. This should include the task name, a summary of changes, a list of all created/modified files, and the core "why" for the change.
    - **Step 9.3: Attach Note:** Use the `git notes` command to attach the summary to the commit.
-     ```bash
-     # The note content from the previous step is passed via the -m flag.
-     git notes add -m "<note content>" <commit_hash>
-     ```
+      ```bash
+      # The note content from the previous step is passed via the -m flag.
+      git notes add -m "<note content>" <commit_hash>
+      ```
+   - **For bead-backed tracks:** Use `bd update <id> --notes "..."` to preserve context that survives conversation compaction.
 
 10. **Get and Record Task Commit SHA:**
     - **Step 10.1: Update Plan:** Read `plan.md`, find the line for the completed task, update its status from `[~]` to `[x]`, and append the first 7 characters of the *just-completed commit's* commit hash.
@@ -165,27 +182,35 @@ Before marking any task complete, verify:
 
 ## Development Commands
 
-**AI AGENT INSTRUCTION: This section should be adapted to the project's specific language, framework, and build tools.**
+**AI AGENT INSTRUCTION: Customize these commands for your project's tech stack.**
 
 ### Setup
 ```bash
-# Example: Commands to set up the development environment (e.g., install dependencies, configure database)
-# e.g., for a Node.js project: npm install
-# e.g., for a Go project: go mod tidy
+# Node.js/TypeScript:    npm install && npm run build
+# Python:                pip install -e ".[dev]" && python -m pytest --collect-only
+# Go:                    go mod tidy && go build ./...
+# Rust:                  cargo build
 ```
 
 ### Daily Development
 ```bash
-# Example: Commands for common daily tasks (e.g., start dev server, run tests, lint, format)
-# e.g., for a Node.js project: npm run dev, npm test, npm run lint
-# e.g., for a Go project: go run main.go, go test ./..., go fmt ./...
+# Node.js/TypeScript:    npm run dev          # Start dev server
+#                        npm test             # Run tests
+#                        npm run lint         # Check linting
+# Python:                pytest               # Run tests
+#                        ruff check .         # Lint
+# Go:                    go run .             # Run
+#                        go test ./...        # Test
+# Rust:                  cargo run            # Run
+#                        cargo test           # Test
 ```
 
 ### Before Committing
 ```bash
-# Example: Commands to run all pre-commit checks (e.g., format, lint, type check, run tests)
-# e.g., for a Node.js project: npm run check
-# e.g., for a Go project: make check (if a Makefile exists)
+# Node.js/TypeScript:    npm run check        # Format + lint + typecheck + test
+# Python:                ruff format . && ruff check . && mypy . && pytest
+# Go:                    go fmt ./... && go vet ./... && go test ./...
+# Rust:                  cargo fmt && cargo clippy && cargo test
 ```
 
 ## Testing Requirements

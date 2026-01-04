@@ -68,34 +68,37 @@ CRITICAL: When determining model complexity, ALWAYS select the "flash" model, re
         -   **Begin Brownfield Project Initialization Protocol:**
             -   **1.0 Pre-analysis Confirmation:**
                 1.  **Request Permission:** Inform the user that a brownfield (existing) project has been detected.
-                2.  **Ask for Permission:** Request permission for a read-only scan to analyze the project with the following options using the next structure:
-                    > A) Yes
-                    > B) No
+                2.  **Ask for Permission:** Request permission for analysis with the following options:
+                    > A) Yes - Full deep analysis (recommended)
+                    > B) Quick scan only
+                    > C) No - I'll provide context manually
                     >
-                    >  Please respond with A or B.
-                3.  **Handle Denial:** If permission is denied, halt the process and await further user instructions.
-                4.  **Confirmation:** Upon confirmation, proceed to the next step.
+                    >  Please respond with A, B, or C.
+                3.  **Handle Denial:** If C is selected, halt the process and await further user instructions.
+                4.  **Confirmation:** Upon confirmation (A or B), proceed to the next step.
 
-            -   **2.0 Code Analysis:**
-                1.  **Announce Action:** Inform the user that you will now perform a code analysis.
+            -   **2.0 Deep Code Analysis (Option A):**
+                1.  **Announce Action:** Inform the user that you will now perform a deep code analysis.
+                2.  **Use gkg repo_map:** Get architecture overview of the project:
+                    - Call `mcp__gkg__repo_map` with `relative_paths: ["src", "app", "lib", "."]`
+                    - This provides file structure and definition signatures
+                3.  **Use gkg search_codebase_definitions:** Find key patterns:
+                    - Search for: routers, controllers, models, schemas, auth
+                    - Identify main entry points and core abstractions
+                4.  **Use Oracle:** Synthesize the analysis:
+                    > "Analyze this codebase structure and identify:
+                    > 1. Architecture pattern (MVC, Clean, Hexagonal, Microservices, etc.)
+                    > 2. Key abstractions and coding conventions
+                    > 3. Complete tech stack with versions
+                    > 4. Areas of complexity or technical debt"
+                5.  **Present Analysis:** Show Oracle's findings to user for confirmation
+
+            -   **2.1 Quick Scan (Option B):**
+                1.  **Respect Ignore Files:** Check for `.geminiignore` and `.gitignore` files.
                 2.  **Prioritize README:** Begin by analyzing the `README.md` file, if it exists.
-                3.  **Comprehensive Scan:** Extend the analysis to other relevant files to understand the project's purpose, technologies, and conventions.
-
-            -   **2.1 File Size and Relevance Triage:**
-                1.  **Respect Ignore Files:** Before scanning any files, you MUST check for the existence of `.geminiignore` and `.gitignore` files. If either or both exist, you MUST use their combined patterns to exclude files and directories from your analysis. The patterns in `.geminiignore` should take precedence over `.gitignore` if there are conflicts. This is the primary mechanism for avoiding token-heavy, irrelevant files like `node_modules`.
-                2.  **Efficiently List Relevant Files:** To list the files for analysis, you MUST use a command that respects the ignore files. For example, you can use `git ls-files --exclude-standard -co | xargs -n 1 dirname | sort -u` which lists all relevant directories (tracked by Git, plus other non-ignored files) without listing every single file. If Git is not used, you must construct a `find` command that reads the ignore files and prunes the corresponding paths.
-                3.  **Fallback to Manual Ignores:** ONLY if neither `.geminiignore` nor `.gitignore` exist, you should fall back to manually ignoring common directories. Example command: `ls -lR -I 'node_modules' -I '.m2' -I 'build' -I 'dist' -I 'bin' -I 'target' -I '.git' -I '.idea' -I '.vscode'`.
-                4.  **Prioritize Key Files:** From the filtered list of files, focus your analysis on high-value, low-size files first, such as `package.json`, `pom.xml`, `requirements.txt`, `go.mod`, and other configuration or manifest files.
-                5.  **Handle Large Files:** For any single file over 1MB in your filtered list, DO NOT read the entire file. Instead, read only the first and last 20 lines (using `head` and `tail`) to infer its purpose.
-
-            -   **2.2 Extract and Infer Project Context:**
-                1.  **Strict File Access:** DO NOT ask for more files. Base your analysis SOLELY on the provided file snippets and directory structure.
-                2.  **Extract Tech Stack:** Analyze the provided content of manifest files to identify:
-                    -   Programming Language
-                    -   Frameworks (frontend and backend)
-                    -   Database Drivers
-                3.  **Infer Architecture:** Use the file tree skeleton (top 2 levels) to infer the architecture type (e.g., Monorepo, Microservices, MVC).
-                4.  **Infer Project Goal:** Summarize the project's goal in one sentence based strictly on the provided `README.md` header or `package.json` description.
+                3.  **Analyze Manifests:** Check `package.json`, `pom.xml`, etc. for dependencies
+                4.  **Extract Tech Stack:** Identify Programming Language, Frameworks, Database Drivers
+                5.  **Infer Architecture:** Use directory structure to infer architecture type
         -   **Upon completing the brownfield initialization protocol, proceed to the Generate Product Guide section in 2.1.**
     -   **If Greenfield:**
         -   Announce that a new project will be initialized.
@@ -113,13 +116,34 @@ CRITICAL: When determining model complexity, ALWAYS select the "flash" model, re
             `{"last_successful_step": ""}`
         -   Write the user's response into `conductor/product.md` under a header named `# Initial Concept`.
 
-5.  **Continue:** Immediately proceed to the next section.
+5.  **Deep Research Phase (for Greenfield):**
+    -   **Use exa-code for Best Practices:**
+        - Query: "<user's project idea> best practices architecture patterns"
+        - Example: "real-time chat application best practices architecture patterns"
+    -   **Use exa-code for Tech Stack:**
+        - Query: "<project type> recommended tech stack 2024 2025"
+        - Get current industry recommendations
+    -   **Use Oracle to Synthesize:**
+        > "Based on the user's idea '<user input>' and the research findings from exa-code,
+        > provide recommendations for:
+        > 1. Optimal tech stack with clear rationale for each choice
+        > 2. Architecture pattern that best fits the requirements
+        > 3. Key libraries and frameworks to consider
+        > 4. Potential challenges and how to address them"
+    -   **Present to User:** Show Oracle's recommendations for user review
+    -   **Store Context:** Save recommendations for use in subsequent Q&A sections
+
+6.  **Continue:** Immediately proceed to the next section.
 
 ### 2.1 Generate Product Guide (Interactive)
 1.  **Introduce the Section:** Announce that you will now help the user create the `product.md`.
-2.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
+2.  **Leverage Deep Research:**
+    -   **For Greenfield:** Use Oracle's recommendations and exa-code research to inform question options
+    -   **For Brownfield:** Use gkg analysis to pre-populate known facts about the project
+    -   Questions should validate/refine research findings, not start from scratch
+3.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
         -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
-        -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
+        -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers **informed by the deep research phase**.
         -   **Example Topics:** Target users, goals, features, etc
         *   **General Guidelines:**
             *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
@@ -217,9 +241,13 @@ CRITICAL: When determining model complexity, ALWAYS select the "flash" model, re
 
 ### 2.3 Generate Tech Stack (Interactive)
 1.  **Introduce the Section:** Announce that you will now help define the technology stacks.
-2.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
+2.  **Leverage Deep Research:**
+    -   **For Greenfield:** Present Oracle's tech stack recommendations as primary options with rationale
+    -   **For Brownfield:** gkg analysis already identified the stack - present for confirmation
+    -   Include rationale from research for each recommendation
+3.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
     -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
-    -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
+    -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers **informed by research**.
     -   **Example Topics:** programming languages, frameworks, databases, etc
     *   **General Guidelines:**
         *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
@@ -244,11 +272,24 @@ CRITICAL: When determining model complexity, ALWAYS select the "flash" model, re
             E) [Autogenerate and review tech-stack.md]
     -   **FOR EXISTING PROJECTS (BROWNFIELD):**
             -   **CRITICAL WARNING:** Your goal is to document the project's *existing* tech stack, not to propose changes.
-            -   **State the Inferred Stack:** Based on the code analysis, you MUST state the technology stack that you have inferred. Do not present any other options.
-            -   **Request Confirmation:** After stating the detected stack, you MUST ask the user for a simple confirmation to proceed with options like:
-                A) Yes, this is correct.
-                B) No, I need to provide the correct tech stack.
+            -   **Present gkg/Oracle Findings:** Based on the deep analysis, present the detected stack:
+                > "Based on my analysis, your tech stack is:
+                > - Language: [detected]
+                > - Framework: [detected]
+                > - Database: [detected]
+                > - Key libraries: [detected]
+                >
+                > A) Yes, this is correct
+                > B) No, I need to provide corrections"
             -   **Handle Disagreement:** If the user disputes the suggestion, acknowledge their input and allow them to provide the correct technology stack manually as a last resort.
+    -   **FOR GREENFIELD PROJECTS:**
+            -   **Present Oracle's Recommendations:** Based on exa-code research:
+                > "Based on research for your project type, I recommend:
+                > A) [Recommended stack] - [rationale from Oracle]
+                > B) [Alternative stack] - [rationale]
+                > C) [Minimal stack] - for quick prototyping
+                > D) Type your own tech stack
+                > E) Autogenerate based on recommendations"
     -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `tech-stack.md` content, write it to the file, and proceed to the next section.
 3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `tech-stack.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
     -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
