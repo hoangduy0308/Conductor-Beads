@@ -28,7 +28,7 @@ Conductor is a **spec-first development methodology** that organizes work into *
 
 ## Quick Start
 
-1. **Setup**: Run `/conductor-setup` (Claude) or `/conductor:setup` (Gemini) to initialize
+1. **Setup**: Run `/conductor-setup` to initialize
    - **Deep Research**: Setup now uses `exa-code` + `Oracle` for Greenfield, `gkg` + `Oracle` for Brownfield
 2. **Create Track**: Run `/conductor-newtrack` to create a new feature/bug track
 3. **Implement**: Run `/conductor-implement` to execute tasks from the plan

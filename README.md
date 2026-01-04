@@ -17,8 +17,7 @@ Together, they enable AI agents to manage long-horizon development tasks without
 
 ## Supported Platforms
 
-- **Gemini CLI** - via extension commands (TOML)
-- **Claude Code** - via slash commands and skills
+- **Amp** - via slash commands and skills
 - **Agent Skills compatible CLIs** - via skills specification
 
 ---
@@ -51,49 +50,41 @@ bd --version
 
 ## Installation
 
-### Claude Code
-
 **Full Installation** (all skills):
 ```bash
 # Clone the repository
-git clone https://github.com/NguyenSiTrung/Conductor-Beads.git
+git clone https://github.com/hoangduy0308/Conductor-Beads.git
 
 # Copy commands and skills to your global config
-cp -r Conductor-Beads/.claude/commands/* ~/.claude/commands/
-cp -r Conductor-Beads/.claude/skills/* ~/.claude/skills/
+cp -r Conductor-Beads/.agents/commands/* ~/.agents/commands/
+cp -r Conductor-Beads/.agents/skills/* ~/.agents/skills/
 ```
 
 **Minimal Installation** (conductor only, smaller context):
 ```bash
-git clone https://github.com/NguyenSiTrung/Conductor-Beads.git
+git clone https://github.com/hoangduy0308/Conductor-Beads.git
 
 # Copy only commands and conductor skill
-cp -r Conductor-Beads/.claude/commands/* ~/.claude/commands/
-mkdir -p ~/.claude/skills
-cp -r Conductor-Beads/.claude/skills/conductor ~/.claude/skills/
+cp -r Conductor-Beads/.agents/commands/* ~/.agents/commands/
+mkdir -p ~/.agents/skills
+cp -r Conductor-Beads/.agents/skills/conductor ~/.agents/skills/
 ```
 
 **Project-Local Installation**:
 ```bash
-# Full - copy entire .claude folder
-cp -r Conductor-Beads/.claude your-project/
+# Full - copy entire .agents folder
+cp -r Conductor-Beads/.agents your-project/
 
 # Minimal - conductor only
-mkdir -p your-project/.claude/skills
-cp -r Conductor-Beads/.claude/commands your-project/.claude/
-cp -r Conductor-Beads/.claude/skills/conductor your-project/.claude/skills/
+mkdir -p your-project/.agents/skills
+cp -r Conductor-Beads/.agents/commands your-project/.agents/
+cp -r Conductor-Beads/.agents/skills/conductor your-project/.agents/skills/
 ```
 
 | Installation | Includes | Best For |
 |--------------|----------|----------|
 | **Full** | conductor, beads, skill-creator skills | Standalone Beads usage, skill development |
 | **Minimal** | conductor skill only (has Beads integration) | Most projects, smaller context window |
-
-### Gemini CLI
-
-```bash
-gemini extensions install https://github.com/NguyenSiTrung/Conductor-Beads --auto-update
-```
 
 ---
 
@@ -104,11 +95,7 @@ gemini extensions install https://github.com/NguyenSiTrung/Conductor-Beads --aut
 Run the setup command in your project directory:
 
 ```bash
-# Claude Code
 /conductor-setup
-
-# Gemini CLI
-/conductor:setup
 ```
 
 This creates the `conductor/` directory with:
@@ -116,6 +103,8 @@ This creates the `conductor/` directory with:
 - `tech-stack.md` - Technology choices
 - `workflow.md` - Development standards (TDD, commits)
 - `tracks.md` - Master track list
+
+**Deep Research:** Setup now uses `exa-code` + `Oracle` for Greenfield projects, `gkg` + `Oracle` for Brownfield projects to provide informed recommendations.
 
 ### Step 2: Initialize Beads
 
@@ -159,11 +148,7 @@ Use **stealth** when working on a shared repository where you don't want to comm
 ### Creating a New Track
 
 ```bash
-# Claude Code
 /conductor-newtrack "Add user authentication"
-
-# Gemini CLI
-/conductor:newTrack "Add user authentication"
 ```
 
 This creates:
@@ -175,11 +160,7 @@ This creates:
 ### Implementing a Track
 
 ```bash
-# Claude Code
 /conductor-implement
-
-# Gemini CLI
-/conductor:implement
 ```
 
 The workflow:
@@ -189,9 +170,9 @@ The workflow:
 4. **Track progress** - Updates plan.md and Beads status
 5. **Verify** - Manual verification at phase boundaries
 
-### Parallel Task Execution (New!)
+### Parallel Task Execution
 
-For phases with independent tasks, Conductor can now execute them in parallel using sub-agents:
+For phases with independent tasks, Conductor can execute them in parallel using sub-agents:
 
 ```markdown
 ## Phase 1: Core Setup
@@ -221,11 +202,7 @@ See [Parallel Execution Design](docs/PARALLEL_EXECUTION.md) for details.
 ### Checking Status
 
 ```bash
-# Claude Code
 /conductor-status
-
-# Gemini CLI
-/conductor:status
 ```
 
 Shows:
@@ -237,21 +214,21 @@ Shows:
 
 ## Commands Reference
 
-| Gemini CLI | Claude Code | Description |
-|------------|-------------|-------------|
-| `/conductor:setup` | `/conductor-setup` | Initialize project context |
-| `/conductor:newTrack` | `/conductor-newtrack` | Create feature/bug track |
-| `/conductor:implement` | `/conductor-implement` | Execute tasks from plan |
-| `/conductor:status` | `/conductor-status` | Show progress overview |
-| `/conductor:revert` | `/conductor-revert` | Git-aware revert |
-| `/conductor:validate` | `/conductor-validate` | Validate project integrity |
-| `/conductor:block` | `/conductor-block` | Mark task as blocked |
-| `/conductor:skip` | `/conductor-skip` | Skip current task |
-| `/conductor:revise` | `/conductor-revise` | Update spec/plan |
-| `/conductor:archive` | `/conductor-archive` | Archive completed tracks |
-| `/conductor:export` | `/conductor-export` | Generate project summary |
-| `/conductor:handoff` | `/conductor-handoff` | Create context handoff |
-| `/conductor:refresh` | `/conductor-refresh` | Sync context with codebase |
+| Command | Description |
+|---------|-------------|
+| `/conductor-setup` | Initialize project context |
+| `/conductor-newtrack` | Create feature/bug track |
+| `/conductor-implement` | Execute tasks from plan |
+| `/conductor-status` | Show progress overview |
+| `/conductor-revert` | Git-aware revert |
+| `/conductor-validate` | Validate project integrity |
+| `/conductor-block` | Mark task as blocked |
+| `/conductor-skip` | Skip current task |
+| `/conductor-revise` | Update spec/plan |
+| `/conductor-archive` | Archive completed tracks |
+| `/conductor-export` | Generate project summary |
+| `/conductor-handoff` | Create context handoff |
+| `/conductor-refresh` | Sync context with codebase |
 
 ### Essential Beads Commands
 
@@ -269,7 +246,7 @@ Shows:
 
 ## Skills
 
-Located in `.claude/skills/`:
+Located in `.agents/skills/`:
 
 | Skill | Description |
 |-------|-------------|
@@ -331,15 +308,12 @@ Skills provide:
 
 ```
 Conductor-Beads/
-├── .claude/
-│   ├── commands/        # Claude Code slash commands (13)
+├── .agents/
+│   ├── commands/        # Slash commands (13)
 │   └── skills/          # Skills (conductor, beads, planning, filing-beads, reviewing-beads, orchestrating-beads, skill-creator)
-├── commands/conductor/  # Gemini CLI TOML commands (13)
 ├── templates/           # Workflow and styleguide templates
 ├── docs/                # Documentation
-├── CLAUDE.md            # Claude Code context
-├── GEMINI.md            # Gemini CLI context
-└── gemini-extension.json
+└── AGENTS.md            # Agent context
 ```
 
 ### Generated Project Structure

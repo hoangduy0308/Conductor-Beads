@@ -506,6 +506,6 @@ bd update <task_id> --status blocked \
 
 ## References
 
-- [Conductor Skill](../.claude/skills/conductor/SKILL.md)
+- [Conductor Skill](../.agents/skills/conductor/SKILL.md)
 - [Beads Documentation](https://github.com/steveyegge/beads)
 - [Beads Agent Instructions](https://github.com/steveyegge/beads/blob/main/AGENT_INSTRUCTIONS.md)

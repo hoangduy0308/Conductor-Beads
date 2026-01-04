@@ -113,9 +113,9 @@ If Beads is unavailable, all Conductor commands work normally using only plan.md
 
 ## Command Workflows
 
-> **Note**: Commands use hyphen format (`/conductor-setup`) for Claude Code. The colon format (`/conductor:setup`) is for Gemini CLI.
+> **Note**: Commands use hyphen format (`/conductor-setup`).
 
-### 1. `/conductor-setup` (or `/conductor:setup`)
+### 1. `/conductor-setup`
 
 **Purpose**: Initialize a new project with Conductor methodology.
 
@@ -182,7 +182,7 @@ Step 6: Verify artifacts
 
 ---
 
-### 2. `/conductor-newtrack` (or `/conductor:newTrack`)
+### 2. `/conductor-newtrack`
 
 **Purpose**: Create a new feature or bug fix track.
 
@@ -231,7 +231,7 @@ conductor/tracks/<shortname_YYYYMMDD>/
 
 ---
 
-### 3. `/conductor-implement` (or `/conductor:implement`)
+### 3. `/conductor-implement`
 
 **Purpose**: Execute tasks from a track's plan.
 
