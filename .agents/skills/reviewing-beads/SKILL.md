@@ -1,61 +1,96 @@
 ---
 name: reviewing-beads
-description: Reviews, proofreads, and refines Beads epics and issues for clarity, completeness, and correct dependencies. Use when polishing issues before implementation or auditing issue quality.
+description: Reviews and refines beads epics and issues for clarity, completeness, and dependency correctness when polishing work before implementation or auditing existing issue quality.
 ---
 
 # Reviewing Beads Issues
 
 **Prerequisite**: `beads` skill / `bd` CLI initialized in this repo (see [beads skill](../beads/SKILL.md))
 
-Reviews and refines beads (epics and issues) for clarity, completeness, and correct dependencies. Used in Planning Phase 5: Refinement (and during Validation if issue quality problems are found).
+Reviews and refines beads (epics and issues) for clarity, completeness, and correct dependencies. Used in Planning Phase 5: Refinement.
 
-> **Terminology**: A *bead* is any graph node. An *epic* is a `type=epic` bead grouping related work. An *issue* is a specific work item (task/bug/feature/chore). The source of truth is `.beads/issues.jsonl`; always use `bd` CLI as the primary interface.
+## Overview
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Existing beads in `.beads/issues.jsonl`, plan context if available |
+| **Output** | Polished beads with updated titles/descriptions/dependencies plus review summary |
+| **Done when** | All ready issues pass checklist, no dependency cycles, ready work available |
+
+> **Terminology**: A *bead* is any graph node. An *epic* is a `type=epic` bead grouping related work. An *issue* is a specific work item. Source of truth is `.beads/issues.jsonl`; always use `bd` CLI.
+
+## Conventions
+
+- Always use `bd * --json` when reading/updating issues for machine-readable output
+- Use explicit "Done when..." acceptance criteria for every issue
+- Use `type=epic` for epics; ensure epics reference the corresponding plan
+- Prefer minimal blocking dependencies; avoid cross-epic tangles when possible
+- Dependency graph must be a DAG (no cycles)
+
+---
 
 ## Step 1: Load Current Issues
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | `.beads/issues.jsonl` via `bd` CLI |
+| **Output** | JSON snapshots of open/ready issues |
+| **Done when** | Complete list of issues to review obtained |
 
 ```bash
 bd list --json
 bd ready --json
 ```
 
+---
+
 ## Step 2: Systematic Review Checklist
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Loaded issue list from Step 1 |
+| **Output** | Per-issue notes or inline edits |
+| **Done when** | Every issue reviewed against all checklist sections |
 
 For EACH issue, verify:
 
 ### Clarity
-
 - [ ] Title is action-oriented and specific
 - [ ] Description is clear and unambiguous
 - [ ] A developer unfamiliar with the codebase could understand the task
 - [ ] No jargon without explanation
 
 ### Completeness
-
 - [ ] Acceptance criteria are defined and testable
 - [ ] Technical implementation hints are provided where helpful
 - [ ] Relevant file paths or modules are mentioned
 - [ ] Edge cases and error handling are considered
 
 ### Dependencies
-
 - [ ] All blocking dependencies are linked
 - [ ] No circular dependencies exist
 - [ ] Dependencies are minimal (not over-constrained)
 - [ ] Ready issues exist for parallel work
 
 ### Scope
-
 - [ ] Issue is appropriately sized (not too large)
 - [ ] Large issues are broken into subtasks
 - [ ] No duplicate or overlapping issues
 
 ### Priority
-
 - [ ] Priority reflects actual importance
 - [ ] Critical path items are prioritized correctly
 - [ ] Dependencies and priorities align
 
+---
+
 ## Step 3: Common Issues to Fix
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Issues flagged during checklist review |
+| **Output** | List of specific fixes needed |
+| **Done when** | All problems identified with clear fix actions |
 
 1. **Vague titles**: "Fix bug" → "Fix null pointer in UserService.getProfile when user not found"
 2. **Missing context**: Add relevant file paths, function names, or module references
@@ -68,7 +103,15 @@ For EACH issue, verify:
 9. **Wrong priorities**: Adjust based on critical path analysis
 10. **Typos and grammar**: Fix for professionalism
 
+---
+
 ## Step 4: Update Issues
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Issues needing updates from Step 3 |
+| **Output** | Updated issues in `.beads/issues.jsonl` |
+| **Done when** | All identified fixes applied |
 
 ```bash
 bd update <id> --title "Improved title" --json
@@ -93,7 +136,15 @@ bd close <id> --reason "Replaced by <new-id>" --json
 bd create "Better title" -t <type> -p <priority> --deps <dep-id> --json
 ```
 
+---
+
 ## Step 5: Dependency Graph Validation
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | All issues after updates |
+| **Output** | Validated dependency graph |
+| **Done when** | No cycles, no orphans, clear critical path |
 
 ```bash
 bd list --json
@@ -104,13 +155,20 @@ bd dep tree <epic-id> --json
 ```
 
 Check:
-
 - No orphaned issues (except entry points)
 - No circular dependencies
 - Critical path is clear
 - Parallelization opportunities are preserved
 
+---
+
 ## Step 6: Final Quality Gate
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Reviewed and validated issues |
+| **Output** | Quality gate pass/fail |
+| **Done when** | All five criteria met |
 
 1. **Readability**: Any developer can pick up any ready issue
 2. **Traceability**: Issues link to epics, epics link to the plan
@@ -118,28 +176,28 @@ Check:
 4. **Parallelism**: Multiple issues can be worked simultaneously
 5. **Completeness**: No gaps in the plan coverage
 
+---
+
 ## Output Format
 
 ### Summary
-
 - Total issues reviewed: X
 - Issues updated: Y
 - Issues created: Z
 - Issues closed/merged: W
 
 ### Changes Made
-
 - List significant updates with rationale
 
 ### Remaining Concerns
-
 - Any issues that need user input
 - Ambiguities that couldn't be resolved
 
 ### Ready for Implementation
-
 - List of ready issues workers can start with
 - Suggested execution order for optimal flow
+
+---
 
 ## Iteration Tracking
 
