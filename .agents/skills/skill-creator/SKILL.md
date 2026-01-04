@@ -1,11 +1,19 @@
 ---
 name: skill-creator
-description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
+description: Guides creation and updating of effective skills that extend Claude's capabilities with specialized knowledge, workflows, and tool integrations when users want to create a new skill, revise an existing skill, or learn skill best practices.
 ---
 
 # Skill Creator
 
-This skill provides guidance for creating effective skills.
+Guides for creating effective skills that extend Claude's capabilities.
+
+## Overview
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | User goals, sample requests, existing skill to update (optional) |
+| **Output** | Complete skill with SKILL.md, scripts/, references/, assets/ as needed |
+| **Done when** | Skill packaged as .skill file and validated successfully |
 
 ## About Skills
 
@@ -20,6 +28,20 @@ equipped with procedural knowledge that no model can fully possess.
 2. Tool integrations - Instructions for working with specific file formats or APIs
 3. Domain expertise - Company-specific knowledge, schemas, business logic
 4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
+
+## Conventions
+
+| Convention | Description |
+|------------|-------------|
+| **Directory naming** | `skill-name/` in kebab-case, max 64 characters |
+| **Required files** | Only `SKILL.md` is required; all else is optional |
+| **Frontmatter** | Only `name` and `description` fields allowed |
+| **Description format** | Single third-person sentence, max 1024 chars, encodes WHAT + WHEN |
+| **scripts/** | Executable code for deterministic, reusable operations |
+| **references/** | Documentation loaded as-needed into context |
+| **assets/** | Files used in output (templates, images), not loaded into context |
+
+---
 
 ## Core Principles
 
@@ -213,6 +235,12 @@ Follow these steps in order, skipping only if there is a clear reason why they a
 
 ### Step 1: Understanding the Skill with Concrete Examples
 
+| Aspect | Description |
+|--------|-------------|
+| **Input** | User goals, existing problems, sample user requests |
+| **Output** | 3-7 canonical usage examples plus clear trigger phrases |
+| **Done when** | Can succinctly state what the skill supports and what should trigger it |
+
 Skip this step only when the skill's usage patterns are already clearly understood. It remains valuable even when working with an existing skill.
 
 To create an effective skill, clearly understand concrete examples of how the skill will be used. This understanding can come from either direct user examples or generated examples that are validated with user feedback.
@@ -229,6 +257,12 @@ To avoid overwhelming users, avoid asking too many questions in a single message
 Conclude this step when there is a clear sense of the functionality the skill should support.
 
 ### Step 2: Planning the Reusable Skill Contents
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Canonical examples from Step 1 |
+| **Output** | List of candidate scripts/, references/, assets/ with rationale |
+| **Done when** | Each major usage has corresponding reusable resources or conscious decision not to create them |
 
 To turn concrete examples into an effective skill, analyze each example by:
 
@@ -254,6 +288,12 @@ To establish the skill's contents, analyze each concrete example to create a lis
 
 ### Step 3: Initializing the Skill
 
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Planned resource list and chosen skill name |
+| **Output** | Initialized skill directory and template SKILL.md |
+| **Done when** | Directory structure exists and matches conventions; placeholder files ready to edit |
+
 At this point, it is time to actually create the skill.
 
 Skip this step only if the skill being developed already exists, and iteration or packaging is needed. In this case, continue to the next step.
@@ -276,6 +316,12 @@ The script:
 After initialization, customize or remove the generated SKILL.md and example files as needed.
 
 ### Step 4: Edit the Skill
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Initialized skeleton skill |
+| **Output** | Implemented scripts, references, assets, and first-pass SKILL.md |
+| **Done when** | Another Claude instance could use the skill end-to-end on the canonical examples |
 
 When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Claude to use. Include information that would be beneficial and non-obvious to Claude. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Claude instance execute these tasks more effectively.
 
@@ -318,6 +364,12 @@ Write instructions for using the skill and its bundled resources.
 
 ### Step 5: Packaging a Skill
 
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Completed skill folder |
+| **Output** | Validated .skill file (or validation errors to fix) |
+| **Done when** | Packaging passes with no validation errors |
+
 Once development of the skill is complete, it must be packaged into a distributable .skill file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
 
 ```bash
@@ -344,6 +396,12 @@ The packaging script will:
 If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
 
 ### Step 6: Iterate
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Real-world usage feedback and logs |
+| **Output** | Updated resources and SKILL.md reflecting improvements |
+| **Done when** | Key issues observed in real usage are addressed and re-tested |
 
 After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
 
