@@ -55,17 +55,17 @@ bd --version
 # Clone the repository
 git clone https://github.com/hoangduy0308/Conductor-Beads.git
 
-# Copy commands and skills to your global config
-cp -r Conductor-Beads/.agents/commands/* ~/.agents/commands/
-cp -r Conductor-Beads/.agents/skills/* ~/.agents/skills/
+# Copy entire .agents folder to your global config
+cp -r Conductor-Beads/.agents/* ~/.agents/
 ```
 
 **Minimal Installation** (conductor only, smaller context):
 ```bash
 git clone https://github.com/hoangduy0308/Conductor-Beads.git
 
-# Copy only commands and conductor skill
-cp -r Conductor-Beads/.agents/commands/* ~/.agents/commands/
+# Copy commands, templates, and conductor skill only
+cp -r Conductor-Beads/.agents/commands ~/.agents/
+cp -r Conductor-Beads/.agents/templates ~/.agents/
 mkdir -p ~/.agents/skills
 cp -r Conductor-Beads/.agents/skills/conductor ~/.agents/skills/
 ```
@@ -78,13 +78,14 @@ cp -r Conductor-Beads/.agents your-project/
 # Minimal - conductor only
 mkdir -p your-project/.agents/skills
 cp -r Conductor-Beads/.agents/commands your-project/.agents/
+cp -r Conductor-Beads/.agents/templates your-project/.agents/
 cp -r Conductor-Beads/.agents/skills/conductor your-project/.agents/skills/
 ```
 
 | Installation | Includes | Best For |
 |--------------|----------|----------|
-| **Full** | conductor, beads, skill-creator skills | Standalone Beads usage, skill development |
-| **Minimal** | conductor skill only (has Beads integration) | Most projects, smaller context window |
+| **Full** | All skills + templates | Standalone Beads usage, skill development |
+| **Minimal** | conductor skill + templates only | Most projects, smaller context window |
 
 ---
 
@@ -310,8 +311,8 @@ Skills provide:
 Conductor-Beads/
 ├── .agents/
 │   ├── commands/        # Slash commands (13)
-│   └── skills/          # Skills (conductor, beads, planning, filing-beads, reviewing-beads, orchestrating-beads, skill-creator)
-├── templates/           # Workflow and styleguide templates
+│   ├── skills/          # Skills (conductor, beads, planning, filing-beads, reviewing-beads, orchestrating-beads, skill-creator)
+│   └── templates/       # Workflow and styleguide templates
 ├── docs/                # Documentation
 └── AGENTS.md            # Agent context
 ```

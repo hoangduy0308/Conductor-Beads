@@ -254,7 +254,7 @@ Present to user:
 
 ### 2.4 Select Code Styleguides (Interactive)
 
-1. **List Available Guides:** Check `templates/code_styleguides/` directory.
+1. **List Available Guides:** Check `.agents/templates/code_styleguides/` directory.
 
 2. **For Greenfield:**
    - Recommend guides based on tech stack with explanation
@@ -279,7 +279,7 @@ Present to user:
 
 ### 2.5 Select Workflow (Interactive)
 
-1. **Copy Initial Workflow:** Copy `templates/workflow.md` to `conductor/workflow.md`
+1. **Copy Initial Workflow:** Copy `.agents/templates/workflow.md` to `conductor/workflow.md`
 
 2. **Ask:**
    > "Use default workflow or customize?"

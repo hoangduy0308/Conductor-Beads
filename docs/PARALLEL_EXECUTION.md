@@ -4,7 +4,7 @@
 
 **Related documentation**:
 - [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md) - Overall Conductor-Beads integration
-- [../templates/workflow.md](../templates/workflow.md) - TDD workflow methodology
+- [../.agents/templates/workflow.md](../.agents/templates/workflow.md) - TDD workflow methodology
 
 ## Overview
 
