@@ -1,6 +1,6 @@
 ---
 name: orchestrating-beads
-description: Orchestrates multi-agent bead execution by assigning tracks, spawning worker agents, and monitoring parallel progress. Use when starting a new epic, coordinating parallel tracks, or running spikes.
+description: Orchestrates multi-agent bead execution by assigning tracks, spawning worker agents, and monitoring parallel progress when starting a new epic, coordinating parallel tracks, or running risk-reducing spikes.
 ---
 
 # Orchestrating Beads: Multi-Agent Coordination
@@ -10,6 +10,16 @@ Spawns and monitors parallel worker agents that execute beads autonomously.
 > **Foundation**: This skill builds on the [beads skill](../beads/SKILL.md) which provides the `bd` CLI commands.
 
 > **Invocation Context**: This skill assumes Beads has been detected and enabled per Conductor's rules (`bd` CLI available, `conductor/beads.json` has `"enabled": true`). It is typically invoked via `/conductor-implement` when working on bead-backed tracks.
+
+## Overview
+
+| Aspect | Description |
+|--------|-------------|
+| **Input** | `history/<feature>/execution-plan.md` from planning skill, beads graph from filing-beads |
+| **Output** | Completed epic with all beads closed, Agent Mail threads with progress, updated Conductor track |
+| **Done when** | All beads closed, workers notified, epic marked complete, Conductor track updated |
+
+---
 
 ## Prerequisites
 
@@ -29,20 +39,35 @@ Spawns and monitors parallel worker agents that execute beads autonomously.
 
 ---
 
-## Quickstart
+## Conventions
 
-1. Ensure `execution-plan.md` exists (from `planning` skill)
-2. Run Spike Mode for HIGH-risk spikes (optional)
-3. Run Epic Mode using execution plan
-4. Monitor workers via Agent Mail (`fetch_inbox`)
-5. Close epic + update Conductor track when complete
+| Pattern | Usage |
+|---------|-------|
+| **Task()** | One `Task()` per track; each runs independently and reports via Agent Mail |
+| **Agent Mail** | Use `ensure_project` → `register_agent` → `send_message`/`fetch_inbox` for coordination |
+| **Worker names** | Adjective+noun pattern (BlueLake, GreenCastle, RedStone); generated in planning, reused here |
+| **bd/bv CLI** | Always use `--json` for machine-readable output; `bv --robot-*` for graph queries |
+| **File reservations** | Workers reserve files before editing; orchestrator mediates conflicts |
+| **Thread structure** | One epic thread for all workers; each worker maintains a track thread for context |
+
+---
+
+## Output Artifacts
+
+| Artifact | Location | Purpose |
+|----------|----------|---------|
+| Epic thread | Agent Mail | Coordination hub for the epic |
+| Track threads | Agent Mail per worker | Progress and learnings per track |
+| Spike results | `.spikes/<feature>/<spike-id>/` | Spike findings (Spike Mode only) |
+| Closed beads | `.beads/issues.jsonl` | All work items marked complete |
+| Conductor track | `conductor/tracks/<track_id>/` | Updated with completion status |
 
 ---
 
 ## Modes
 
 | Mode | Use Case | Input |
-| ---- | -------- | ----- |
+|------|----------|-------|
 | **Epic Mode** | Execute full feature with multiple tracks | `history/<feature>/execution-plan.md` |
 | **Spike Mode** | Validate HIGH risk items in parallel | Spike beads from planning Phase 3 |
 
@@ -50,37 +75,17 @@ Spawns and monitors parallel worker agents that execute beads autonomously.
 
 ## Mode A: Spike Execution
 
-Use this mode during planning Phase 3 to validate HIGH risk items before full decomposition.
+Use during planning Phase 3 to validate HIGH risk items before full decomposition.
 
-### When to Use
+| Aspect | Description |
+|--------|-------------|
+| **Input** | HIGH risk items identified by planning skill |
+| **Output** | Spike results in `.spikes/<feature>/`, closed spike beads with YES/NO decisions |
+| **Done when** | All spikes completed, learnings integrated into approach |
 
-- Planning skill identified HIGH risk components needing spikes
-- Multiple spikes can run in parallel
-- Each spike is time-boxed (30 min default)
+See [references/spike-workflow.md](references/spike-workflow.md) for the full spike workflow with CLI examples.
 
-### Spike Workflow
-
-```
-1. Create spike beads:
-   bd create "Spike: <question>" -t epic -p 0
-   bd create "Spike: Test X" -t task --deps <spike-epic>
-
-2. Get parallel plan:
-   bv --robot-plan 2>/dev/null | jq '.plan.tracks'
-
-3. Spawn spike workers:
-   Task() per spike with time-box
-
-4. Workers write to:
-   .spikes/<feature>/<spike-id>/
-
-5. Close with learnings:
-   bd close <id> --reason "YES: <approach>" or "NO: <blocker>"
-```
-
-### Spike Worker Prompt
-
-See [worker-prompt-template.md](references/worker-prompt-template.md) for full spike and track worker prompts.
+**Worker prompt**: Use [references/worker-prompt-template.md](references/worker-prompt-template.md) with spike-specific context.
 
 ---
 
@@ -88,68 +93,45 @@ See [worker-prompt-template.md](references/worker-prompt-template.md) for full s
 
 **Prerequisite**: Run `planning`, `filing-beads`, and `reviewing-beads` skills first to produce `history/<feature>/execution-plan.md`.
 
-## Architecture (Mode B: Autonomous)
+### Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              ORCHESTRATOR                                   │
-│                              (This Agent)                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  1. Read execution-plan.md (from planning skill)                            │
-│  2. Initialize Agent Mail                                                   │
-│  3. Spawn worker subagents via Task()                                       │
-│  4. Monitor progress via Agent Mail                                         │
-│  5. Handle cross-track blockers                                             │
-│  6. Announce completion                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        ORCHESTRATOR                              │
+│                        (This Agent)                              │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 1: Read execution-plan.md                                 │
+│  Phase 2: Initialize Agent Mail                                  │
+│  Phase 3: Spawn workers via Task()                               │
+│  Phase 4: Monitor progress                                       │
+│  Phase 5: Handle cross-track blockers                            │
+│  Phase 6: Announce completion                                    │
+└─────────────────────────────────────────────────────────────────┘
            │
            │ Task() spawns parallel workers
            ▼
-┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-│  BlueLake        │  │  GreenCastle     │  │  RedStone        │
-│  Track 1         │  │  Track 2         │  │  Track 3         │
-│  [a → b → c]     │  │  [x → y]         │  │  [m → n → o]     │
-├──────────────────┤  ├──────────────────┤  ├──────────────────┤
-│  For each bead:  │  │  For each bead:  │  │  For each bead:  │
-│  • Reserve files │  │  • Reserve files │  │  • Reserve files │
-│  • Do work       │  │  • Do work       │  │  • Do work       │
-│  • Report mail   │  │  • Report mail   │  │  • Report mail   │
-│  • Next bead     │  │  • Next bead     │  │  • Next bead     │
-└──────────────────┘  └──────────────────┘  └──────────────────┘
-           │                   │                   │
-           └───────────────────┼───────────────────┘
-                               ▼
-                    ┌─────────────────────┐
-                    │     Agent Mail      │
-                    │  ─────────────────  │
-                    │  Epic Thread:       │
-                    │  • Progress reports │
-                    │  • Bead completions │
-                    │  • Blockers         │
-                    │                     │
-                    │  Track Threads:     │
-                    │  • Bead context     │
-                    │  • Learnings        │
-                    └─────────────────────┘
+┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+│  BlueLake      │  │  GreenCastle   │  │  RedStone      │
+│  Track 1       │  │  Track 2       │  │  Track 3       │
+│  [a → b → c]   │  │  [x → y]       │  │  [m → n → o]   │
+└────────────────┘  └────────────────┘  └────────────────┘
 ```
 
 ---
 
 ## Phase 1: Read Execution Plan
 
-The planning skill outputs `history/<feature>/execution-plan.md` with:
-
-- Track assignments (agent name, beads, file scope)
-- Cross-track dependencies
-- Key learnings from spikes
+| Aspect | Description |
+|--------|-------------|
+| **Input** | `history/<feature>/execution-plan.md` from planning skill |
+| **Output** | In-memory structures: EPIC_ID, TRACKS[], CROSS_DEPS |
+| **Done when** | Execution plan parsed, all tracks and dependencies extracted |
 
 ```bash
-# Read the execution plan
 Read("history/<feature>/execution-plan.md")
 ```
 
 Extract:
-
 - `EPIC_ID` - the epic bead id
 - `TRACKS` - array of {agent_name, beads[], file_scope}
 - `CROSS_DEPS` - any cross-track dependencies
@@ -158,11 +140,15 @@ Extract:
 
 ## Phase 2: Initialize Agent Mail
 
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Project path, EPIC_ID from Phase 1 |
+| **Output** | Agent Mail project initialized; orchestrator agent registered |
+| **Done when** | Orchestrator can send/receive messages for the epic thread |
+
 ```bash
-# Ensure project exists
 ensure_project(human_key="<absolute-project-path>")
 
-# Register orchestrator identity
 register_agent(
   project_key="<path>",
   name="<OrchestratorName>",
@@ -176,30 +162,40 @@ register_agent(
 
 ## Phase 3: Spawn Worker Subagents
 
+| Aspect | Description |
+|--------|-------------|
+| **Input** | TRACKS from Phase 1, orchestrator identity, worker prompt template |
+| **Output** | One Task() worker per track with Agent Mail integration |
+| **Done when** | All tracks have active workers with prompts instantiated |
+
 **Spawn all workers in parallel using Task tool.**
 
-Each worker prompt should include:
+Each worker prompt includes:
 - Agent identity + track assignment (beads in order, file scope)
 - Protocol: register → reserve files → claim bead → work → close → report → release
 - Agent Mail integration for progress reports and blocker escalation
-- Context preservation via track thread for cross-bead memory
-
-See [worker-prompt-template.md](references/worker-prompt-template.md) for the full worker prompt template.
 
 ```python
-# Spawn workers in parallel
 Task(description="Worker BlueLake: Track 1", prompt="<use template>")
 Task(description="Worker GreenCastle: Track 2", prompt="<use template>")
 Task(description="Worker RedStone: Track 3", prompt="<use template>")
 ```
 
+See [references/worker-prompt-template.md](references/worker-prompt-template.md) for the full worker prompt template.
+
 ---
 
 ## Phase 4: Monitor Progress
 
-While workers execute, monitor via:
+| Aspect | Description |
+|--------|-------------|
+| **Input** | EPIC_ID, orchestrator name, Agent Mail project key |
+| **Output** | Updated view of worker status, blockers, bead completion |
+| **Done when** | All worker states known, blockers identified for Phase 5 |
 
-### Check Epic Thread for Updates
+> **Loop**: Repeat Phase 4 & 5 until Phase 6 completion criteria are met.
+
+### Check Epic Thread
 
 ```bash
 search_messages(
@@ -230,26 +226,28 @@ bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'
 
 ## Phase 5: Handle Cross-Track Issues
 
-### If Worker Reports Blocker
+| Aspect | Description |
+|--------|-------------|
+| **Input** | Blocker messages, file reservation conflicts, bv quick_ref |
+| **Output** | Resolved blockers, updated beads, replies sent to workers |
+| **Done when** | Every blocker has resolution communicated via Agent Mail |
+
+### Blocker Resolution
+
+1. **Waiting on another track** → Message that worker
+2. **Needs decision** → Make decision and reply
+3. **External blocker** → Update bead status
 
 ```bash
-# Read the blocker message
-# Determine if it's:
-# 1. Waiting on another track → message that worker
-# 2. Needs decision → make decision and reply
-# 3. External blocker → update bead status
-
 reply_message(
   message_id=<blocker-msg-id>,
   body_md="Resolution: ..."
 )
 ```
 
-### If File Conflict
+### File Conflict Resolution
 
 ```bash
-# Check who holds reservation
-# Message holder to coordinate
 send_message(
   to=["<Holder>"],
   thread_id="<epic-id>",
@@ -262,7 +260,11 @@ send_message(
 
 ## Phase 6: Epic Completion
 
-When all workers report track complete:
+| Aspect | Description |
+|--------|-------------|
+| **Input** | bv graph for EPIC_ID, Agent Mail threads, Conductor track |
+| **Output** | All beads closed, workers notified, Conductor track updated |
+| **Done when** | bv open_count is 0, summary sent, epic closed, track marked complete |
 
 ### Verify All Done
 
@@ -298,31 +300,22 @@ send_message(
 ### Close Epic
 
 ```bash
-bd close <epic-id> --reason "All tracks complete"
+bd close <epic-id> --reason "All tracks complete" --json
 ```
 
 ### Update Conductor Track
 
-```bash
-# Update conductor track status
-# Mark track as completed in conductor/tracks.md
-```
-
----
-
-## Worker Prompt Template
-
-See [references/worker-prompt-template.md](references/worker-prompt-template.md) for the full worker prompt template.
+Update `conductor/tracks.md` to mark track as completed.
 
 ---
 
 ## Quick Reference
 
-| Phase      | Action                                        |
-| ---------- | --------------------------------------------- |
-| Read Plan  | `Read("history/<feature>/execution-plan.md")` |
-| Initialize | `ensure_project`, `register_agent`            |
-| Spawn      | `Task()` for each track (parallel)            |
-| Monitor    | `fetch_inbox`, `search_messages`              |
-| Resolve    | `reply_message` for blockers                  |
-| Complete   | Verify all done, send summary, close epic     |
+| Phase | Action |
+|-------|--------|
+| Read Plan | `Read("history/<feature>/execution-plan.md")` |
+| Initialize | `ensure_project`, `register_agent` |
+| Spawn | `Task()` for each track (parallel) |
+| Monitor | `fetch_inbox`, `search_messages`, `bv --robot-triage` |
+| Resolve | `reply_message` for blockers |
+| Complete | Verify open_count=0, send summary, close epic |
