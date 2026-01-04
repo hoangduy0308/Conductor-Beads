@@ -1,6 +1,6 @@
 ---
 name: planning
-description: Generates beads-backed feature plans by exploring the codebase, assessing risk with spikes, and decomposing work into beads. Use when a feature roadmap is needed for complex, multi-module features.
+description: Generates beads-backed feature roadmaps via a discovery → synthesis → verification → decomposition pipeline for complex, multi-module features requiring execution-ready plans integrated with Conductor tracks and beads/bv.
 ---
 
 # Beads-based Feature Planning
@@ -36,16 +36,29 @@ Before using this skill, ensure:
 1. `/conductor-setup` has been run (conductor/ directory exists)
 2. Read `conductor/product.md`, `conductor/tech-stack.md` for project context
 
+## Conventions
+
+- **`Task()`**: Create a sub-agent to execute work in parallel. Each Task() runs independently.
+- **`oracle()`**: Use the Oracle tool for analysis/synthesis. Expects `task`, `context`, and `files` parameters.
+- **`skill("name")`**: Load another skill for specialized workflows.
+- **Feature slug**: Use kebab-case (e.g., `user-auth`, `payment-integration`)
+
 ## Quickstart
 
-1. Run Discovery → save `history/<feature>/discovery.md`
-2. Run Synthesis (Oracle) → `approach.md`
-3. Create spikes for HIGH risk items → execute via `orchestrating-beads`
-4. Use `filing-beads` to create beads
-5. Run `reviewing-beads` and `bv` to validate
-6. Generate `execution-plan.md` for `orchestrating-beads`
+1. **Phase 1 – Discovery** → save `history/<feature>/discovery.md`
+2. **Phase 2 – Synthesis** (Oracle) → `history/<feature>/approach.md`
+3. **Phase 3 – Verification** → create spikes for HIGH risk items via `orchestrating-beads`
+4. **Phase 4 – Decomposition** → use `filing-beads` to create beads
+5. **Phase 5 – Refinement** → run `reviewing-beads` to polish
+6. **Phase 6 – Validation** → run `bv` to validate graph
+7. **Phase 7 – Track Planning** → generate `execution-plan.md`
+8. **Phase 8 – Create Track** → `/conductor-newtrack --import`
 
 ## Phase 1: Discovery (Parallel Exploration)
+
+**Input**: User feature request, `conductor/product.md`, `conductor/tech-stack.md`
+**Output**: `history/<feature>/discovery.md`
+**Done when**: Architecture snapshot, existing patterns, constraints, and external references captured
 
 Launch parallel sub-agents to gather codebase intelligence:
 
@@ -62,6 +75,10 @@ exa → Library docs (if external integration needed)
 Save to `history/<feature>/discovery.md`. See `references/discovery-template.md` for full template.
 
 ## Phase 2: Synthesis (Oracle)
+
+**Input**: `history/<feature>/discovery.md`
+**Output**: `history/<feature>/approach.md`
+**Done when**: Gap Analysis, Approach Options, and Risk Map completed using template
 
 Feed Discovery Report to Oracle for gap analysis:
 
@@ -104,6 +121,10 @@ Save to `history/<feature>/approach.md`. See `references/approach-template.md` f
 
 ## Phase 3: Verification (Risk-Based)
 
+**Input**: `history/<feature>/approach.md` with Risk Map
+**Output**: `.spikes/<feature>/` with validated code, updated `approach.md`
+**Done when**: All HIGH risk items have spikes completed with YES/NO answers
+
 ### For HIGH Risk Items → Create Spike Beads
 
 Spikes are mini-plans executed via the orchestrating-beads skill:
@@ -141,6 +162,10 @@ Update approach.md with validated learnings.
 
 ## Phase 4: Decomposition (filing-beads skill)
 
+**Input**: Validated `approach.md`, spike learnings from `.spikes/`
+**Output**: Beads in `.beads/issues.jsonl`
+**Done when**: All work items created as beads with acceptance criteria and file scopes
+
 Load the filing-beads skill and create beads with embedded learnings:
 
 ```bash
@@ -149,35 +174,21 @@ skill("filing-beads")
 
 See [filing-beads skill](../filing-beads/SKILL.md) for detailed bead creation guidelines.
 
-Each bead MUST include spike learnings (if applicable), reference to `.spikes/` code for HIGH risk items, clear acceptance criteria, and file scope for track assignment.
+Each bead MUST include spike learnings (if applicable), reference to `.spikes/` code for HIGH risk items, clear acceptance criteria, and file scope for track assignment. See `references/bead-with-learnings-example.md` for a full example.
 
-### Example Bead with Learnings
-
-```markdown
-# Implement Stripe webhook handler
-
-## Context
-
-Spike bd-12 validated: Stripe SDK works with our Node version.
-See `.spikes/billing-spike/webhook-test/` for working example.
-
-## Learnings from Spike
-
-- Must use `stripe.webhooks.constructEvent()` for signature verification
-- Webhook secret stored in `STRIPE_WEBHOOK_SECRET` env var
-- Raw body required (not parsed JSON)
-
-## Acceptance Criteria
-
-- [ ] Webhook endpoint at `/api/webhooks/stripe`
-- [ ] Signature verification implemented
-- [ ] Events: `checkout.session.completed`, `invoice.paid`
-```
 ## Phase 5: Refinement (reviewing-beads skill)
+
+**Input**: Beads in `.beads/issues.jsonl`
+**Output**: Polished beads with clear acceptance criteria
+**Done when**: reviewing-beads reports no critical issues (clarity, scope, dependencies checked)
 
 Run `skill("reviewing-beads")` to polish beads. See [reviewing-beads skill](../reviewing-beads/SKILL.md) for the full quality checklist.
 
 ## Phase 6: Validation
+
+**Input**: Polished beads from Phase 5
+**Output**: Validated dependency graph with no cycles or orphans
+**Done when**: `bv --robot-insights` shows no cycles, `bv --robot-plan` has no unassigned beads
 
 Run bv analysis and fix issues. If issues found, re-run `reviewing-beads` skill.
 
@@ -200,7 +211,11 @@ oracle(
 
 ## Phase 7: Track Planning
 
-Creates an **execution-ready plan** for the orchestrating-beads skill.
+**Input**: Validated bead graph, `bv --robot-plan` output
+**Output**: `history/<feature>/execution-plan.md`
+**Done when**: All tracks have non-overlapping file scopes, no unassigned beads
+
+Creates an **execution-ready plan** for the orchestrating-beads skill. The `execution-plan.md` is the canonical input for orchestrating-beads.
 
 1. Get tracks: `bv --robot-plan 2>/dev/null | jq '.plan.tracks'`
 2. Assign non-overlapping file scopes per track
@@ -215,6 +230,10 @@ bv --robot-plan 2>/dev/null | jq '.plan.unassigned'  # Must be empty
 ```
 
 ## Phase 8: Create Conductor Track
+
+**Input**: `execution-plan.md`, beads in `.beads/`
+**Output**: Conductor track in `conductor/tracks/<track_id>/`
+**Done when**: Track registered in `conductor/tracks.md` with `beads_epic` in metadata
 
 After planning is complete, create the Conductor track to register it:
 
